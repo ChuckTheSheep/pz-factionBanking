@@ -1,0 +1,25 @@
+Sadge Panda
+
+I'm interested in commissioning a mod that is sort of a "group bank" type of thing. 
+
+The goal is to be able to have players, either by faction or safehouse (those who can access it) be able to deposit Base.
+Money into the bank and every x-number of days the bank issues y-value of interest on the funds in the bank. 
+
+Purpose: We run base defense style events using your shops & traders mod for the event economy.
+Allowing players to purchase items and equipment they need along the way.
+We also reward them for planning ahead for the later more difficult waves for the base defense, 
+and the group bank with interest earned on their deposits is one of the main ways we do this.
+
+Parameters:
+> Needs to be compatible with Shops & Traders (your mod)
+> Needs to be placeable only by admins (your system for shops & Traders is great)
+> Needs to have parameters which are editable such as:
+-- 1) Minimum value/threshold before interest starts getting earned ($1000 minimum balance)
+	...and will stop paying interest if the value falls below the threshold value.
+-- 2) Admins are able to set the % interest value that gets paid out.
+-- 3) Admins are able to set the day (or game hour) increments between the interest being paid by the bank.
+> Access to the group bank can be locked to faction members or open to anyone (admins can set this)
+
+Preference would be that it operates similarly to your shops & traders in terms of setup 
+-- being able to select any container/location was very nice. Again... we love that mod.
+
