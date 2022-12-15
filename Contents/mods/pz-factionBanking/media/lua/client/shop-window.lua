@@ -1,9 +1,6 @@
 require "ISUI/ISPanelJoypad"
-require "shop-globalModDataClient"
-require "shop-wallet"
+require "bank-globalModDataClient"
 require "luautils"
-require "shop-itemLookup"
-require "shop-shared"
 
 ---@class storeWindow : ISPanel
 storeWindow = ISPanelJoypad:derive("storeWindow")

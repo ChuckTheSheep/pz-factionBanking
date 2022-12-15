@@ -1,7 +1,6 @@
 require "ISUI/ISInventoryPane"
 require "ISUI/ISInventoryPage"
 
-
 local function validStoreObject(mapObject)
     local canView = true
     if mapObject then

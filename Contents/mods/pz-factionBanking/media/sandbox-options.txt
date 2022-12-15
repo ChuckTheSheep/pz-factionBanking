@@ -1,25 +1,10 @@
 VERSION = 1,
 
-option ShopsAndTraders.PercentageDropOnDeath
-{type = integer, min = 0, max = 100, default = 50, page = ShopsAndTraders, translation = ShopsAndTraders_PercentageDropOnDeath,}
+option FactionBanking.MinimumBalanceForInterest
+{type = double, min = 0, max = 999999999, default = 1000, page = FactionBanking, translation = FactionBanking_MinimumBalanceForInterest,}
 
-option ShopsAndTraders.MoneyWeight
-{type = double, min = 0.001, max = 1000, default = 0.001, page = ShopsAndTraders, translation = ShopsAndTraders_MoneyWeight,}
+option FactionBanking.InterestRates
+{type = double, min = 0.01, max = 999999999, default = 25, page = FactionBanking, translation = FactionBanking_InterestRates,}
 
-option ShopsAndTraders.StartingWallet
-{type = double, min = 0.01, max = 1000000, default = 25, page = ShopsAndTraders, translation = ShopsAndTraders_StartingWallet,}
-
-option ShopsAndTraders.CanWithdraw
-{type = boolean, default = true, page = ShopsAndTraders, translation = ShopsAndTraders_CanWithdraw,}
-
-option ShopsAndTraders.MoneySpawnMin
-{type = double, min = 0.01, max = 1000000, default = 1.50, page = ShopsAndTraders, translation = ShopsAndTraders_MoneySpawnMin,}
-
-option ShopsAndTraders.MoneySpawnMax
-{type = double, min = 0.01, max = 1000000, default = 25.00, page = ShopsAndTraders, translation = ShopsAndTraders_MoneySpawnMax,}
-
-option ShopsAndTraders.TradersResellItems
-{type = boolean, default = true, page = ShopsAndTraders, translation = ShopsAndTraders_TradersResellItems,}
-
-option ShopsAndTraders.TradersResetStock
-{type = boolean, default = false, page = ShopsAndTraders, translation = ShopsAndTraders_TradersResetStock,}
+option FactionBanking.InterestEarnDuration
+{type = string, default = "Mon,Tue,Wed,Thur,Fri,Sat,Sun", page = FactionBanking, translation = FactionBanking_InterestEarnDuration,}

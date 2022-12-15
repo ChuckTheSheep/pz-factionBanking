@@ -1,15 +1,14 @@
-require "shop-globalModDataServer"
-require "shop-shared"
+require "bank-globalModDataServer"
+require "bank-shared"
 
-WALLET_HANDLER = {}
-STORE_HANDLER = {}
+ACCOUNTS_HANDLER = {}
+BANK_HANDLER = {}
 
----@class wallet Pseudo-Object
-local wallet = {}
-wallet.steamID = false
-wallet.playerUUID = false
-wallet.playerUsername = false
-wallet.amount = 25
+---@class account Pseudo-Object
+local account = {}
+account.faction = false
+account.factionLocked = false
+account.amount = 0
 
 
 function WALLET_HANDLER.new(playerID,steamID,playerUsername)

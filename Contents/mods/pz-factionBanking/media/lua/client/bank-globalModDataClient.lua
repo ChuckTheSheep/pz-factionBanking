@@ -1,21 +1,18 @@
 ---Credit to Konijima (Konijima#9279) for clearing up networking :thumbsup:
-require "shop-commandsServerToClient"
+require "bank-commandsServerToClient"
 require "shop-shared"
 
-CLIENT_STORES = {}
-CLIENT_WALLETS = {}
+CLIENT_BANK_ACCOUNTS = {}
 
 local function initGlobalModData(isNewGame)
 
     if isClient() then
-        if ModData.exists("STORES") then ModData.remove("STORES") end
-        if ModData.exists("WALLETS") then ModData.remove("WALLETS") end
+        if ModData.exists("BANK_ACCOUNTS") then ModData.remove("BANK_ACCOUNTS") end
     end
 
-    CLIENT_STORES = ModData.getOrCreate("STORES")
-    CLIENT_WALLETS = ModData.getOrCreate("WALLETS")
+    CLIENT_BANK_ACCOUNTS = ModData.getOrCreate("BANK_ACCOUNTS")
 
-    triggerEvent("SHOPPING_ClientModDataReady")
+    triggerEvent("BANKING_ClientModDataReady")
 end
 Events.OnInitGlobalModData.Add(initGlobalModData)
 
@@ -23,10 +20,8 @@ Events.OnInitGlobalModData.Add(initGlobalModData)
 ---@param name string
 ---@param data table
 local function receiveGlobalModData(name, data)
-    if name == "STORES" then
-        _internal.copyAgainst(CLIENT_STORES,data)
-    elseif name == "WALLETS" then
-        _internal.copyAgainst(CLIENT_WALLETS,data)
+    if name == "BANK_ACCOUNTS" then
+        _internal.copyAgainst(CLIENT_BANK_ACCOUNTS,data)
     end
 end
 Events.OnReceiveGlobalModData.Add(receiveGlobalModData)

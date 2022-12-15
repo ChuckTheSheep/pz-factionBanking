@@ -5,7 +5,7 @@ description=[img]https://i.imgur.com/p7Fv1Z6.gif[/img]
 description=
 description=[url=https://ko-fi.com/chuckleberryfinn][img]https://i.imgur.com/GxZ38nz.png[/img] [b]Consider supporting Chuck![/b][/url] [url=https://www.patreon.com/bePatron?u=17239488][img]https://raw.githubusercontent.com/ChuckTheSheep/Vanilla-Weapons-Expanded/main/Contents/mods/VanillaWeaponsExpanded/patreon/Patreon%20Logo.png[/img][/url]
 description=
-description=Complemtary mod to Shops and Traders, allows for factions to bank their money.
+description=Complementary mod to Shops and Traders, allows for factions to bank their money together.
 description=
 tags=Build 41;Framework;Misc;Multiplayer
 visibility=public

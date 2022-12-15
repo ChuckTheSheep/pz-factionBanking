@@ -1,27 +1,12 @@
 Sandbox_EN = {
-	Sandbox_ShopsAndTraders = "Shops and Traders",
-	Sandbox_ShopsAndTraders_PercentageDropOnDeath = "Money-Drop Percentage",
-	Sandbox_ShopsAndTraders_PercentageDropOnDeath_tooltip = "This percentage will be how much money is dropped when a player dies.",
+	Sandbox_FactionBanking = "Faction Banking",
 
-    Sandbox_ShopsAndTraders_StartingWallet = "Starting Wallet Value",
-    Sandbox_ShopsAndTraders_StartingWallet_tooltip = "How much money players start with.",
+	Sandbox_FactionBanking_MinimumBalanceForInterest = "Minimum Balance",
+	Sandbox_FactionBanking_MinimumBalanceForInterest_tooltip = "The smallest amount needed to start earning interest.",
 
-	Sandbox_ShopsAndTraders_MoneyWeight = "Money Weight",
-	Sandbox_ShopsAndTraders_MoneyWeight_tooltip = "How much each 'unit' of currency weighs."
+    Sandbox_FactionBanking_InterestRates = "Interest Rate",
+    Sandbox_FactionBanking_InterestRates_tooltip = "How much of a percentage of one's bank account is gained over time.",
 
-    Sandbox_ShopsAndTraders_TradersResellItems = "Traders Resell Option Default",
-    Sandbox_ShopsAndTraders_TradersResellItems_tooltip = "This setting changes the default setting when creating listings.\nIf toggled on traders will stock items sold to them.",
-
-    Sandbox_ShopsAndTraders_TradersResetStock = "Restocking Traders Reset Their Stock",
-    Sandbox_ShopsAndTraders_TradersResellItems_tooltip = "When traders restock they clear out items sold to them.",
-
-    Sandbox_ShopsAndTraders_CanWithdraw = "Can Withdraw Cash",
-    Sandbox_ShopsAndTraders_CanWithdraw_tooltip = "If players can withdraw money-items from their wallets.",
-
-    Sandbox_ShopsAndTraders_MoneySpawnMin = "Minimum Value For Money-Item",
-    Sandbox_ShopsAndTraders_MoneySpawnMin_tooltip = "The minimum value money items can spawn with.",
-
-    Sandbox_ShopsAndTraders_MoneySpawnMax = "Maximum Value For Money-Item",
-    Sandbox_ShopsAndTraders_MoneySpawnMax_tooltip = "The maximum value money items can spawn with.",
-
-	}
+    Sandbox_FactionBanking_InterestEarnDuration = "Hours Between Interest Earnings",
+    Sandbox_FactionBanking_InterestEarnDuration_tooltip = "How many in-game hours between when interest is earned.",
+}
