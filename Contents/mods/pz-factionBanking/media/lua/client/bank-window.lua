@@ -3,10 +3,11 @@ require "bank-globalModDataClient"
 require "luautils"
 
 ---@class storeWindow : ISPanel
-storeWindow = ISPanelJoypad:derive("storeWindow")
-storeWindow.messages = {}
-storeWindow.CoolDownMessage = 300
-storeWindow.MaxItems = 20
+bankWindow = ISPanelJoypad:derive("bankWindow")
+
+bankWindow.messages = {}
+bankWindow.CoolDownMessage = 300
+bankWindow.MaxItems = 20
 
 
 function storeWindow:onCartItemSelected()
@@ -90,7 +91,7 @@ function storeWindow:addItemEntryChange()
 end
 
 
-function storeWindow:initialise()
+function bankWindow:initialise()
     ISPanelJoypad.initialise(self)
     local btnWid = 100
     local btnHgt = 25
@@ -1086,10 +1087,10 @@ function storeWindow:finalizeDeal()
 end
 
 
-function storeWindow:RestoreLayout(name, layout) ISLayoutManager.DefaultRestoreWindow(self, layout) end
-function storeWindow:SaveLayout(name, layout) ISLayoutManager.DefaultSaveWindow(self, layout) end
+function bankWindow:RestoreLayout(name, layout) ISLayoutManager.DefaultRestoreWindow(self, layout) end
+function bankWindow:SaveLayout(name, layout) ISLayoutManager.DefaultSaveWindow(self, layout) end
 
-function storeWindow:new(x, y, width, height, player, storeObj, mapObj)
+function bankWindow:new(x, y, width, height, player, bankObj, mapObj)
     local o = {}
     x = getCore():getScreenWidth() / 2 - (width / 2)
     y = getCore():getScreenHeight() / 2 - (height / 2)
@@ -1104,27 +1105,24 @@ function storeWindow:new(x, y, width, height, player, storeObj, mapObj)
     o.height = height
     o.player = player
     o.mapObject = mapObj
-    o.storeObj = storeObj
+    o.bankObj = bankObj
     o.moveWithMouse = true
     o.selectedItem = nil
     o.pendingRequest = false
-    storeWindow.instance = o
+    bankWindow.instance = o
     return o
 end
 
 
-function storeWindow:onBrowse(storeObj, mapObj)
-    if storeWindow.instance and storeWindow.instance:isVisible() then
-        storeWindow.instance:setVisible(false)
-        storeWindow.instance:removeFromUIManager()
+function bankWindow:onBrowse(storeObj, mapObj)
+    if bankWindow.instance and bankWindow.instance:isVisible() then
+        bankWindow.instance:setVisible(false)
+        bankWindow.instance:removeFromUIManager()
     end
 
-    local itemDictionary = getItemDictionary()
-    sendClientCommand("shop", "updateItemDictionary", { itemsToCategories=itemDictionary.itemsToCategories })
+    triggerEvent("BANKING_ClientModDataReady")
 
-    triggerEvent("SHOPPING_ClientModDataReady")
-
-    local ui = storeWindow:new(50,50,555,555, getPlayer(), storeObj, mapObj)
+    local ui = bankWindow:new(50,50,555,555, getPlayer(), bankObj, mapObj)
     ui:initialise()
     ui:addToUIManager()
 end
