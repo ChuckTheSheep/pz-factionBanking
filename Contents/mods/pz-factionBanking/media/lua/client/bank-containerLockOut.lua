@@ -1,16 +1,16 @@
 require "ISUI/ISInventoryPane"
 require "ISUI/ISInventoryPage"
 
-local function validStoreObject(mapObject)
+local function validBankObject(mapObject)
     local canView = true
     if mapObject then
         local mapObjectModData = mapObject:getModData()
         if mapObjectModData then
-            local storeObjID = mapObjectModData.storeObjID
-            if storeObjID then
-                local storeObj = CLIENT_STORES[storeObjID]
+            local bankObjID = mapObjectModData.bankObjID
+            if bankObjID then
+                local bankObj = CLIENT_BANK_ACCOUNTS[bankObjID]
                 canView = false
-                if storeObj.isBeingManaged and (isAdmin() or isCoopHost() or getDebug()) then canView = true end
+                if bankObj.isBeingManaged and (isAdmin() or isCoopHost() or getDebug()) then canView = true end
             end
         end
     end
@@ -21,7 +21,7 @@ end
 local ISInventoryTransferAction_isValid = ISInventoryTransferAction.isValid
 function ISInventoryTransferAction:isValid()
     if self.destContainer and self.srcContainer then
-        if validStoreObject(self.destContainer:getParent()) and validStoreObject(self.srcContainer:getParent()) then
+        if validBankObject(self.destContainer:getParent()) and validBankObject(self.srcContainer:getParent()) then
             return ISInventoryTransferAction_isValid(self)
         end
     end
@@ -36,8 +36,8 @@ function ISInventoryPage:dropItemsInContainer(button)
     if container then
         local mapObj = container:getParent()
         if mapObj then
-            local storeObjID = mapObj:getModData().storeObjID
-            if storeObjID then allow = validStoreObject(mapObj) end
+            local bankObjID = mapObj:getModData().bankObjID
+            if bankObjID then allow = validBankObject(mapObj) end
         end
     end
     if allow then ISInventoryPage_dropItemsInContainer(self, button)
@@ -59,13 +59,14 @@ function ISInventoryPage:update()
     if not self.onCharacter then
         -- If the currently-selected container is locked to the player, select another container.
         local object = self.inventory and self.inventory:getParent() or nil
-        if object and #self.backpacks > 1 and instanceof(object, "IsoThumpable") and (not validStoreObject(object)) then
+        if object and #self.backpacks > 1 and instanceof(object, "IsoThumpable") and (not validBankObject(object)) then
             local currentIndex = self:getCurrentBackpackIndex()
             local unlockedIndex = self:prevUnlockedContainer(currentIndex, false)
             if unlockedIndex == -1 then
                 unlockedIndex = self:nextUnlockedContainer(currentIndex, false)
             end
             if unlockedIndex ~= -1 then
+                local playerObj = getSpecificPlayer(self.player)
                 if playerObj:getJoypadBind() ~= -1 then
                     self.backpackChoice = unlockedIndex
                 end
@@ -83,7 +84,7 @@ local function containerLockOut(UI, STEP)
             local mapObj = containerButton.inventory:getParent()
             if mapObj then
 
-                local canView = validStoreObject(mapObj)
+                local canView = validBankObject(mapObj)
 
                 if not canView and containerButton then
                     containerButton.onclick = nil

@@ -1,5 +1,6 @@
 IGUI_EN = {
     IGUI_WITHDRAW = "Withdraw",
     IGUI_DEPOSIT = "Deposit",
-    IGUI_INTERESTRATE = "Interest Rate",
+    IGUI_INTEREST_RATE = "Interest Rate",
+    IGUI_BANK = "Bank",
 }

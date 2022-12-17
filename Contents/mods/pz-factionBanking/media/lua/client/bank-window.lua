@@ -2,93 +2,12 @@ require "ISUI/ISPanelJoypad"
 require "bank-globalModDataClient"
 require "luautils"
 
----@class storeWindow : ISPanel
+---@class bankWindow : ISPanel
 bankWindow = ISPanelJoypad:derive("bankWindow")
 
 bankWindow.messages = {}
 bankWindow.CoolDownMessage = 300
 bankWindow.MaxItems = 20
-
-
-function storeWindow:onCartItemSelected()
-    local row = self.yourCartData:rowAt(self.yourCartData:getMouseX(), self.yourCartData:getMouseY())
-    if row ~= self.yourCartData.selected then return end
-    self.yourCartData:removeItemByIndex(self.yourCartData.selected)
-end
-
-
-function storeWindow:storeItemRowAt(y)
-    local y0 = 0
-    local listings = self.storeObj.listings
-    for i,v in ipairs(self.storeStockData.items) do
-        if not v.height then v.height = self.storeStockData.itemheight end
-
-        local listing = listings[v.item]
-
-        local texture, script, validCategory
-        if type(v.item) == "string" then
-            script = getScriptManager():getItem(v.item)
-            if script then texture = script:getNormalTexture()
-            else validCategory = findMatchesFromCategories(v.item:gsub("category:",""))
-            end
-        else
-            texture = v.item:getTex()
-        end
-
-        local showListing = ((listing.stock ~= 0 or listing.reselling==true) and (listing.available ~= 0) and (texture or #validCategory>0))
-        if listing.alwaysShow==true then showListing = true end
-        local managing = (self:isBeingManaged() and (isAdmin() or isCoopHost() or getDebug()))
-
-        if showListing or managing then
-            if y >= y0 and y < y0 + v.height then return i end
-            y0 = y0 + v.height
-        end
-    end
-    return -1
-end
-
-
-function storeWindow:onStoreItemSelected()
-    local row = self:storeItemRowAt(self.storeStockData:getMouseY())
-    if not self.storeStockData.items[row] then return end
-    local item = self.storeStockData.items[row].item
-
-    if self:isBeingManaged() then
-        self.storeStockData:removeItemByIndex(self.storeStockData.selected)
-        sendClientCommand("shop", "removeListing", { item=item, storeID=self.storeObj.ID })
-        return
-    end
-
-    if #self.yourCartData.items >= storeWindow.MaxItems then return end
-    local inCart = 0
-    for k,v in pairs(self.yourCartData.items) do if v.item == item then inCart = inCart+1 end end
-
-    if self.storeObj and ((self.storeObj.listings[item].available >= inCart+1) or (self.storeObj.listings[item].available == -1)) then
-        local script = getScriptManager():getItem(item)
-        local scriptName = script:getDisplayName()
-        self.yourCartData:addItem(scriptName, item)
-    end
-end
-
-
-function storeWindow:addItemEntryChange()
-    local s = storeWindow.instance
-    if not s then return end
-    local matches
-
-    if s.categorySet.selected[1] == true then
-        matches = findMatchesFromCategories(s.addStockEntry:getInternalText())
-    else
-        matches = findMatchesFromItemDictionary(s.addStockEntry:getInternalText())
-    end
-
-    if matches then
-        local text
-        for _,type in pairs(matches) do text = (text or "")..type.."\n" end
-        if text then self.tooltip = text return end
-    end
-    self.tooltip = nil
-end
 
 
 function bankWindow:initialise()
@@ -100,7 +19,7 @@ function bankWindow:initialise()
     local listHeight = (self.height*0.6)
 
     local storeName = "new store"
-    if self.storeObj then storeName = self.storeObj.name end
+    if self.bankObj then storeName = self.bankObj.name end
 
     self.manageStoreName = ISTextEntryBox:new(storeName, 10, 10, self.width-20, btnHgt)
     self.manageStoreName:initialise()
@@ -213,7 +132,7 @@ function bankWindow:initialise()
     self:addChild(self.manageBtn)
 
     local restockHours = ""
-    if self.storeObj then restockHours = tostring(self.storeObj.restockHrs) end
+    if self.bankObj then restockHours = tostring(self.bankObj.restockHrs) end
     self.restockHours = ISTextEntryBox:new(restockHours, self.width-60, 70-btnHgt, 50, self.addStockBtn.height)
     self.restockHours.font = UIFont.Medium
     self.restockHours.borderColor = { r = 1, g = 0, b = 0, a = 0.7 }
@@ -316,254 +235,13 @@ function bankWindow:initialise()
 end
 
 
-function storeWindow:populateComboList()
-    self.assignComboBox:clear()
-    self.assignComboBox:addOptionWithData("BLANK", false)
-    for ID,DATA in pairs(CLIENT_STORES) do self.assignComboBox:addOptionWithData(DATA.name, ID) end
-    if (not self.assignComboBox.selected) or (self.assignComboBox.selected > #self.assignComboBox.options) then self.assignComboBox.selected = 1 end
-end
-
-
-function storeWindow:isBeingManaged()
-    if self.storeObj and self.storeObj.isBeingManaged then return true end
+function bankWindow:isBeingManaged()
+    if self.bankObj and self.bankObj.isBeingManaged then return true end
     return false
 end
 
 
-function storeWindow:rtrnTypeIfValid(item)
-    local itemType
-    local itemCat
-    if type(item) == "string" then
-        local itemScript = getScriptManager():getItem(item)
-        if itemScript then itemType = item end
-    else
-        if self.player and luautils.haveToBeTransfered(self.player, item) then return false, "IGUI_NOTRADE_OUTSIDEINV" end
-        if (item:getCondition()/item:getConditionMax())<0.75 or item:isBroken() then return false, "IGUI_NOTRADE_DAMAGED" end
-        itemType = item:getFullType()
-        if (isMoneyType(itemType) and item:getModData().value) then return itemType end
-
-        itemCat = item:getDisplayCategory()
-    end
-
-    local storeObj = self.storeObj
-    if storeObj and itemType then
-
-        local listing = storeObj.listings[itemType]
-        if not listing and itemCat then listing = storeObj.listings["category:"..tostring(itemCat)] end
-        if not listing then return false, "IGUI_NOTRADE_INVALIDTYPE" end
-        if listing then
-            if listing.buybackRate > 0 then return itemType, false, itemCat
-            else return itemType, "IGUI_NOTRADE_ONLYSELL" end
-        end
-
-    end
-    return false, nil
-end
-
-
-function storeWindow:drawCart(y, item, alt)
-    local texture
-    local itemType, reason, itemCat = self.parent:rtrnTypeIfValid(item.item)
-
-    if type(item.item) == "string" then texture = getScriptManager():getItem(item.item):getNormalTexture()
-    else texture = item.item:getTex() end
-
-    local color = {r=1, g=1, b=1, a=0.9}
-    local storeObj = self.parent.storeObj
-    local noList = false
-    if reason and type(item.item) ~= "string" then
-        color = {r=0.75, g=0, b=0, a=0.45}
-        noList = true
-    end
-
-    self:drawRectBorder(0, y, self:getWidth(), self.itemheight - 1, 0.9, self.borderColor.r, self.borderColor.g, self.borderColor.b)
-    self:drawTextureScaledAspect(texture, 5, y+3, 22, 22, color.a, color.r, color.g, color.b)
-    self:drawText(item.text or "", 32, y+6, color.r, color.g, color.b, color.a, self.font)
-
-    if noList then
-        local nlW = (self:getWidth()/6)+20
-        if reason then
-            reason = getText(reason)
-            nlW = math.max(nlW, (getTextManager():MeasureStringX(self.font,reason)+20))
-        end
-        local nlH = (self.itemheight-1)/2
-        local nlX = (self:getWidth())-(nlW)-10
-        local nlY = y+(nlH/2)
-        color = {r=1, g=0, b=0, a=0.6}
-        self:drawRect(nlX, nlY, nlW, nlH, 1, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-        self:drawText(reason or "", nlX+10, nlY, color.r, color.g, color.b, color.a, self.font)
-        self:drawRectBorder(nlX, nlY, nlW, nlH, 0.9, color.r, color.g, color.b)
-    end
-
-    local balanceDiff = 0
-    if storeObj and (not noList) then
-        local listing = storeObj.listings[itemType] or storeObj.listings["category:"..tostring(itemCat)] or isMoneyType(itemType)
-        if listing then
-            if type(item.item) == "string" then balanceDiff = listing.price
-            else
-                if isMoneyType(itemType) then balanceDiff = 0-item.item:getModData().value
-                else balanceDiff = 0-(listing.price*(listing.buybackRate/100))
-                end
-            end
-
-            local balanceColor = {r=1, g=1, b=1, a=0.9}
-            if balanceDiff > 0 then
-                balanceDiff = "-".._internal.numToCurrency(balanceDiff)
-                balanceColor = {r=1, g=0.2, b=0.2, a=0.9}
-
-            elseif balanceDiff < 0 then
-                balanceDiff = "+".._internal.numToCurrency(math.abs(balanceDiff))
-                balanceColor = {r=0.2, g=1, b=0.2, a=0.9}
-            else
-                balanceDiff = " ".._internal.numToCurrency(balanceDiff)
-            end
-
-            local costDiff_x = getTextManager():MeasureStringX(self.font,balanceDiff)+30
-            self:drawText(balanceDiff, (self.x+self.width)-costDiff_x, y+6, balanceColor.r, balanceColor.g, balanceColor.b, balanceColor.a, self.font)
-        end
-    end
-
-    return y + self.itemheight
-end
-
-
-function storeWindow:drawStock(y, item, alt)
-    local texture, script, validCategory
-    if type(item.item) == "string" then
-        script = getScriptManager():getItem(item.item)
-        if script then texture = script:getNormalTexture()
-        else validCategory = findMatchesFromCategories(item.item:gsub("category:",""))
-        end
-    else
-        texture = item.item:getTex()
-    end
-
-    local color = {r=1, g=1, b=1, a=0.9}
-
-    local storeObj = self.parent.storeObj
-    if storeObj then
-        local listing = storeObj.listings[item.item]
-        if listing then
-
-            local validCategoryLen = 0
-            if type(validCategory)=="table" then validCategoryLen = #validCategory end
-
-            local showListing = ((listing.stock ~= 0 or listing.reselling==true) and (listing.available ~= 0) and (texture or validCategoryLen>0))
-            if listing.alwaysShow==true then showListing = true end
-            local managing = (self.parent:isBeingManaged() and (isAdmin() or isCoopHost() or getDebug()))
-
-            if showListing or managing then
-
-                if not string.match(item.item, "category:") then
-                    local inCart = 0
-                    for k,v in pairs(self.parent.yourCartData.items) do if v.item == item.item then inCart = inCart+1 end end
-                    local availableTemp = listing.available-inCart
-                    if availableTemp == 0 then color = {r=0.7, g=0.7, b=0.7, a=0.3} end
-                end
-
-                local extra = ""
-                if (not texture) or (not validCategoryLen>0) then extra = "\<!\> " end
-
-                self:drawRectBorder(0, (y), self:getWidth(), self.itemheight - 1, 0.9, self.borderColor.r, self.borderColor.g, self.borderColor.b)
-                if texture then self:drawTextureScaledAspect(texture, 5, y+3, 22, 22, color.a, color.r, color.g, color.b) end
-                self:drawText(extra..item.text, 32, y+6, color.r, color.g, color.b, color.a, self.font)
-
-                return y + self.itemheight
-            end
-        end
-    end
-    return y
-end
-
-
-function storeWindow:displayStoreStock()
-
-    self.storeStockData:clear()
-
-    local storeObj = self.storeObj
-    if not storeObj then return end
-    local scriptManager = getScriptManager()
-
-    if not storeObj.listings then print("storeObj.listings: not found") return end
-    if storeObj.listings and type(storeObj.listings)~="table" then
-        print("storeObj.listings: not table: "..tostring(storeObj.listings))
-        return
-    end
-
-    local managed = self:isBeingManaged() and (isAdmin() or isCoopHost() or getDebug())
-
-    for _,listing in pairs(storeObj.listings) do
-
-        local script = scriptManager:getItem(listing.item)
-        local itemDisplayName = listing.item
-        if script then itemDisplayName = script:getDisplayName() end
-
-        local isCategoryListingAndIsValid = (string.match(listing.item, "category:") and findMatchesFromCategories(listing.item:gsub("category:","")))
-
-        local price = _internal.numToCurrency(listing.price)
-        if listing.price <= 0 then price = getText("IGUI_FREE") end
-
-        local inCart = 0
-        for k,v in pairs(self.yourCartData.items) do if v.item == listing.item then inCart = inCart+1 end end
-        local availableTemp = listing.available-inCart
-
-        local stockText = " ("..availableTemp.."/"..math.max(listing.available, listing.stock)..")"
-        if listing.stock == -1 or string.match(listing.item, "category:") then stockText = "" end
-
-        if string.match(itemDisplayName, "category:") then
-            itemDisplayName = itemDisplayName:gsub("category:","")
-            itemDisplayName = getTextOrNull("IGUI_ItemCat_"..itemDisplayName) or itemDisplayName
-            if managed then itemDisplayName = "category: "..itemDisplayName end
-        end
-
-        local listedItem = self.storeStockData:addItem(price.."  "..itemDisplayName..stockText, listing.item)
-
-        if managed then
-            local tooltipText = ""
-            if not string.match(listedItem.item, "category:") then
-                tooltipText = tooltipText.." [restock x"..listing.stock.."]"
-            end
-            tooltipText = tooltipText.." [buyback "..listing.buybackRate.."%]"
-
-            if not script and not isCategoryListingAndIsValid then tooltipText = "\<INVALID ITEM\> "..tooltipText end
-
-            local resell = listing.reselling
-            if resell~=SandboxVars.ShopsAndTraders.TradersResellItems then if resell then tooltipText = tooltipText.." [resell]" else tooltipText = tooltipText.." [no resell]" end end
-            if tooltipText ~= "" then listedItem.tooltip = tooltipText end
-        end
-    end
-end
-
-
-function storeWindow:addItemToYourCart(item)
-    local add = true
-    for i,v in ipairs(self.yourCartData.items) do if v.item == item then add = false break end end
-    if add then self.yourCartData:addItem(item:getName(), item) end
-end
-
-
-function storeWindow:yourOfferMouseUp(x, y)
-    if self.vscroll then self.vscroll.scrolling = false end
-    local counta = 1
-    if ISMouseDrag.dragging then
-        for i,v in ipairs(ISMouseDrag.dragging) do
-            counta = 1
-            if instanceof(v, "InventoryItem") then self.parent:addItemToYourCart(v)
-            else
-                if v.invPanel.collapsed[v.name] then
-                    counta = 1
-                    for i2,v2 in ipairs(v.items) do
-                        if counta > 1 then self.parent:addItemToYourCart(v2) end
-                        counta = counta + 1
-                    end
-                end
-            end
-        end
-    end
-end
-
-
-function storeWindow:update()
+function bankWindow:update()
     if not self.player or not self.mapObject or (math.abs(self.player:getX()-self.mapObject:getX())>2) or (math.abs(self.player:getY()-self.mapObject:getY())>2) then
         self:setVisible(false)
         self:removeFromUIManager()
@@ -572,10 +250,7 @@ function storeWindow:update()
 end
 
 
-function storeWindow:removeItem(item) self.yourCartData:removeItem(item.text) end
-
-
-function storeWindow:validateElementColor(e)
+function bankWindow:validateElementColor(e)
     if not e then return end
     if e==self.addStockQuantity and self.categorySet.selected[1] == true then
         e.borderColor = { r = 0.3, g = 0.3, b = 0.3, a = 0.3 }
@@ -598,28 +273,8 @@ function storeWindow:validateElementColor(e)
 end
 
 
-function storeWindow:getOrderTotal()
-    local totalForTransaction = 0
-    for i,v in ipairs(self.yourCartData.items) do
-        local itemType, _, itemCat = self:rtrnTypeIfValid(v.item)
-        if itemType then
-            if type(v.item) ~= "string" then
-                if isMoneyType(itemType) then totalForTransaction = totalForTransaction-(v.item:getModData().value)
-                else
-                    local itemListing = self.storeObj.listings[itemType] or self.storeObj.listings["category:"..tostring(itemCat)]
-                    if itemListing then totalForTransaction = totalForTransaction-(itemListing.price*(itemListing.buybackRate/100)) end
-                end
-            else
-                local itemListing = self.storeObj.listings[v.item]
-                if itemListing then totalForTransaction = totalForTransaction+itemListing.price end
-            end
-        end
-    end
-    return totalForTransaction
-end
 
-
-function storeWindow:displayOrderTotal()
+function bankWindow:displayOrderTotal()
     local x = self.yourCartData.x
     local y = self.yourCartData.y+self.yourCartData.height
     local w = self.yourCartData.width
@@ -642,24 +297,26 @@ function storeWindow:displayOrderTotal()
     self:drawText(textForTotal, w-xOffset+5, y+(fontH/2), tColor.r, tColor.g, tColor.b, tColor.a, self.font)
     self:drawRectBorder(x, y+4, w, h, 0.9, self.borderColor.r, self.borderColor.g, self.borderColor.b)
 
-    self:drawRect(x, y+h+8, w, h, 0.9, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-    local walletBalance = getWalletBalance(self.player)
-    local walletBalanceLine = getText("IGUI_WALLETBALANCE")..": ".._internal.numToCurrency(walletBalance)
-    local bColor = balanceColor.normal
-    if (walletBalance-totalForTransaction) < 0 then bColor = balanceColor.red end
-    self:drawText(walletBalanceLine, x+10, y+h+4+(fontH/2), bColor.r, bColor.g, bColor.b, bColor.a, self.font)
+    if SandboxVars.ShopsAndTraders.PlayerWallets then
+        self:drawRect(x, y+h+8, w, h, 0.9, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
+        local walletBalance = getWalletBalance(self.player)
+        local walletBalanceLine = getText("IGUI_WALLETBALANCE")..": ".._internal.numToCurrency(walletBalance)
+        local bColor = balanceColor.normal
+        if (walletBalance-totalForTransaction) < 0 then bColor = balanceColor.red end
+        self:drawText(walletBalanceLine, x+10, y+h+4+(fontH/2), bColor.r, bColor.g, bColor.b, bColor.a, self.font)
 
-    local walletBalanceAfter = walletBalance-totalForTransaction
-    local sign = " "
-    if walletBalanceAfter < 0 then sign = "-" end
-    local wbaText = sign.._internal.numToCurrency(math.abs(walletBalanceAfter))
-    local xOffset2 = getTextManager():MeasureStringX(self.font, wbaText)+15
-    self:drawText(wbaText, w-xOffset2+5, y+h+4+(fontH/2), 0.7, 0.7, 0.7, 0.7, self.font)
-    self:drawRectBorder(x, y+h+8, w, h, 0.9, self.borderColor.r, self.borderColor.g, self.borderColor.b)
+        local walletBalanceAfter = walletBalance-totalForTransaction
+        local sign = " "
+        if walletBalanceAfter < 0 then sign = "-" end
+        local wbaText = sign.._internal.numToCurrency(math.abs(walletBalanceAfter))
+        local xOffset2 = getTextManager():MeasureStringX(self.font, wbaText)+15
+        self:drawText(wbaText, w-xOffset2+5, y+h+4+(fontH/2), 0.7, 0.7, 0.7, 0.7, self.font)
+        self:drawRectBorder(x, y+h+8, w, h, 0.9, self.borderColor.r, self.borderColor.g, self.borderColor.b)
+    end
 end
 
 
-function storeWindow:prerender()
+function bankWindow:prerender()
     local z = 15
     local splitPoint = 100
     local x = 10
@@ -667,12 +324,12 @@ function storeWindow:prerender()
 
 
     if not self:isBeingManaged() then
-        local storeName = "No Name Set"
-        if self.storeObj then storeName = self.storeObj.name end
-        self:drawText(storeName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, storeName)/2), z, 1,1,1,1, UIFont.Medium)
+        local bankName = getText("IGUI_BANK")
+        if self.bankObj then bankName = self.bankObj.name..bankName end
+        self:drawText(bankName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, bankName)/2), z, 1,1,1,1, UIFont.Medium)
 
-        if self.storeObj then
-            local restockingIn = tostring(self.storeObj.nextRestock)
+        if self.bankObj then
+            local restockingIn = tostring(self.bankObj.nextRestock)
             if restockingIn then self:drawTextRight(getText("IGUI_RESTOCK_HR", restockingIn), self.width-10, 10, 0.9,0.9,0.9,0.8, UIFont.NewSmall) end
         end
 
@@ -716,55 +373,8 @@ function storeWindow:prerender()
     z = z + 30
 end
 
-function storeWindow:updateTooltip()
-    local x = self:getMouseX()
-    local y = self:getMouseY()
-    local item
-    if x >= self.storeStockData:getX() and x <= self.storeStockData:getX() + self.storeStockData:getWidth() and y >= self.storeStockData:getY() and y <= self.storeStockData:getY() + self.storeStockData:getHeight() then
-        y = self.storeStockData:rowAt(self.storeStockData:getMouseX(), self.storeStockData:getMouseY())
-        if self.storeStockData.items[y] then
-            item = self.storeStockData.items[y]
-        end
-    end
-    if x >= self.yourCartData:getX() and x <= self.yourCartData:getX() + self.yourCartData:getWidth() and y >= self.yourCartData:getY() and y <= self.yourCartData:getY() + self.yourCartData:getHeight() then
-        y = self.yourCartData:rowAt(self.yourCartData:getMouseX(), self.yourCartData:getMouseY())
-        if self.yourCartData.items[y] then
-            item = self.yourCartData.items[y]
-        end
-    end
 
-    if item and item.item and type(item.item)~="string" then
-
-        if self.toolRender then
-            self.toolRender:setItem(item.item)
-            if not self:getIsVisible() then self.toolRender:setVisible(false)
-            else
-                self.toolRender:setVisible(true)
-                self.toolRender:addToUIManager()
-                self.toolRender:bringToTop()
-            end
-        else
-            self.toolRender = ISToolTipInv:new(item.item)
-            self.toolRender:initialise()
-            self.toolRender:addToUIManager()
-            if not self:getIsVisible() then
-                self.toolRender:setVisible(true)
-            end
-            self.toolRender:setOwner(self)
-            self.toolRender:setCharacter(self.player)
-            self.toolRender:setX(self:getMouseX())
-            self.toolRender:setY(self:getMouseY())
-            self.toolRender.followMouse = true
-        end
-    else
-        if self.toolRender then
-            self.toolRender:setVisible(false)
-        end
-    end
-end
-
-
-function storeWindow:updateButtons()
+function bankWindow:updateButtons()
 
     self.purchase.enable = false
     self.manageBtn.enable = false
@@ -786,7 +396,7 @@ function storeWindow:updateButtons()
     self.aBtnDel.enable = false
     self.aBtnDel.borderColor = { r = 0.3, g = 0.3, b = 0.3, a = 0.7 }
 
-    if not self.storeObj then
+    if not self.bankObj then
         if self.importBtn.toggled==true then
             self.importText.enabled = true
             self.importCancel.enable = true
@@ -830,8 +440,8 @@ end
 
 function storeWindow:render()
 
-    if self.mapObject and self.mapObject:getModData().storeObjID then self.storeObj = CLIENT_STORES[self.mapObject:getModData().storeObjID] end
-    if self.storeObj and self.mapObject and not self.mapObject:getModData().storeObjID then self.storeObj = nil end
+    if self.mapObject and self.mapObject:getModData().bankObjID then self.bankObj = CLIENT_STORES[self.mapObject:getModData().bankObjID] end
+    if self.bankObj and self.mapObject and not self.mapObject:getModData().bankObjID then self.bankObj = nil end
 
     self:updateButtons()
     self:updateTooltip()
@@ -855,12 +465,12 @@ function storeWindow:render()
         self.manageBtn:setVisible(false)
         if managed then blocked = true end
     end
-    if not (self.storeObj) then
+    if not (self.bankObj) then
         self:populateComboList()
         blocked = true
     end
 
-    local shouldSeeStorePresetOptions = (not self.storeObj) and (isAdmin() or isCoopHost() or getDebug())
+    local shouldSeeStorePresetOptions = (not self.bankObj) and (isAdmin() or isCoopHost() or getDebug())
     self.assignComboBox:setVisible(shouldSeeStorePresetOptions)
     self.aBtnConnect:setVisible(shouldSeeStorePresetOptions)
     self.aBtnDel:setVisible(shouldSeeStorePresetOptions)
@@ -957,20 +567,20 @@ function storeWindow:onClick(button)
         end
     end
 
-    if button.internal == "CLEAR_STORE" and self.storeObj and self:isBeingManaged() then
-        sendClientCommand("shop", "clearStoreFromMapObj", { storeID=self.storeObj.ID, x=x, y=y, z=z, mapObjName=mapObjName })
+    if button.internal == "CLEAR_STORE" and self.bankObj and self:isBeingManaged() then
+        sendClientCommand("shop", "clearStoreFromMapObj", { storeID=self.bankObj.ID, x=x, y=y, z=z, mapObjName=mapObjName })
     end
 
     if button.internal == "MANAGE" then
         local newName
         local restockHrs
-        local store = self.storeObj
+        local store = self.bankObj
         if store then
             if self:isBeingManaged() then
                 store.isBeingManaged = false
                 newName = self.manageStoreName:getInternalText()
                 restockHrs = tonumber(self.restockHours:getInternalText())
-                self.storeObj.name = newName
+                self.bankObj.name = newName
             else
                 self.manageStoreName:setText(store.name)
                 store.isBeingManaged = true
@@ -980,7 +590,7 @@ function storeWindow:onClick(button)
     end
 
     if button.internal == "ADDSTOCK" then
-        local store = self.storeObj
+        local store = self.bankObj
         if not store then return end
         if not self:isBeingManaged() then return end
         if not self.addStockBtn.enable then return end
@@ -1056,7 +666,7 @@ end
 
 
 function storeWindow:finalizeDeal()
-    if not self.storeObj then return end
+    if not self.bankObj then return end
     local itemToPurchase = {}
     local itemsToSell = {}
 
@@ -1083,7 +693,7 @@ function storeWindow:finalizeDeal()
     if not walletID then print("ERROR: finalizeDeal: No Wallet ID for "..self.player:getUsername()..", aborting.") return end
     self.yourCartData:clear()
 
-    sendClientCommand(self.player,"shop", "processOrder", { playerID=walletID, storeID=self.storeObj.ID, buying=itemToPurchase, selling=itemsToSell })
+    sendClientCommand(self.player,"shop", "processOrder", { playerID=walletID, storeID=self.bankObj.ID, buying=itemToPurchase, selling=itemsToSell })
 end
 
 
@@ -1114,7 +724,7 @@ function bankWindow:new(x, y, width, height, player, bankObj, mapObj)
 end
 
 
-function bankWindow:onBrowse(storeObj, mapObj)
+function bankWindow:onBrowse(bankObj, mapObj)
     if bankWindow.instance and bankWindow.instance:isVisible() then
         bankWindow.instance:setVisible(false)
         bankWindow.instance:removeFromUIManager()
