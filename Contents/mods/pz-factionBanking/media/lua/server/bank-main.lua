@@ -30,7 +30,7 @@ function ACCOUNTS_HANDLER.parseDeadAccounts(playerObj,playerID)
         if accountActual then
             
             local factionActual = Faction.getFaction(factionName)
-            if not factionActual or (factionActual and (account.owner ~= factionActual:getOwner() ) then
+            if not factionActual or (factionActual and (account.owner ~= factionActual:getOwner() )) then
                 accountActual.dead = true
                 accountActual.faction = accountActual.faction.."\[DEAD\]"
             end
