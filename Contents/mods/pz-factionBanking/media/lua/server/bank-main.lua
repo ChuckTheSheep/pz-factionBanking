@@ -64,22 +64,21 @@ function ACCOUNTS_HANDLER.getOrSetFactionAccount(faction,factionLocked)
 end
 
 ---@param playerObj IsoPlayer|IsoGameCharacter|IsoMovingObject|IsoObject
-function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requestAmount,moneyProvided)
+function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requestAmount,factionID)
 
     local playerWallet = WALLET_HANDLER.getOrSetPlayerWallet(playerID)
     if not playerWallet then print("ERROR: ACCOUNTS_HANDLER.validateRequest: No valid player wallet") return end
+    if not factionID then print("WARN: ACCOUNTS_HANDLER.validateRequest: No factionID provided") return end
 
-    local faction = Faction.getPlayerFaction(playerObj)
-    if not faction then return end
-    local factionAccount = ACCOUNTS_HANDLER.getOrSetFactionAccount(faction)
-    
-    requestAmount = requestAmount or 0
-    moneyProvided = moneyProvided or 0
-    
-    if (requestAmount ~= 0 or moneyProvided ~= 0) and faction then
+    local factionAccount = ACCOUNTS_HANDLER.getOrSetFactionAccount(factionID)
+    if not factionAccount then print("ERROR: ACCOUNTS_HANDLER.validateRequest: No valid factionAccount") return end
+
+    if requestAmount ~= 0 then
         --deposits = negative, withdraws = positive
-        playerWallet.amount = playerWallet.amount-requestAmount
-        factionAccount.amount = factionAccount.amount+requestAmount+moneyProvided
-        account.usedByHistory[playerID] = {username=playerUsername,balance=balance+requestAmount+moneyProvided}
+        factionAccount.amount = factionAccount.amount+requestAmount
+        WALLET_HANDLER.validateMoneyOrWallet(playerWallet,playerObj,0-requestAmount)
+        local balanceBefore = account.usedByHistory[playerID].balance
+        account.usedByHistory[playerID] = {username=playerUsername,balance=balanceBefore+requestAmount}
+        triggerEvent("BANKING_ServerModDataReady")
     end
 end
