@@ -18,6 +18,16 @@ function bankWindow:initialise()
     local x = (self.width / 2)-15
     local y = (self.height*0.6)
 
+    local bankName = "Bank"
+    if self.bankObj then bankName = self.bankObj.faction.." "..getText("IGUI_BANK") end
+
+    self.manageFaction = ISTextEntryBox:new(bankName, 10, 10, self.width-20, btnHgt)
+    self.manageFaction:initialise()
+    self.manageFaction:instantiate()
+    self.manageFaction.font = UIFont.Medium
+    self.manageFaction.borderColor = { r = 1, g = 0, b = 0, a = 0.7 }
+    self:addChild(self.manageFaction)
+
     self.factionLocked = ISTickBox:new(self.x+10, self.y+10, 18, 18, "", self, nil)
     self.factionLocked.textColor = { r = 1, g = 0, b = 0, a = 0.7 }
     self.factionLocked.tooltip = getText("IGUI_FACTIONLOCKED_TOOLTIP")
@@ -69,45 +79,48 @@ end
 
 
 function bankWindow:prerender()
-    local z = 15
-    local fontH = getTextManager():MeasureFont(self.font)
-
-    self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-
-    local bankName = getText("IGUI_BANK")
-    if self.bankObj then bankName = self.bankObj.name.." "..bankName end
-    self:drawText(bankName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, bankName)/2), z, 1,1,1,1, UIFont.Medium)
-
-    local balanceText = getText("IGUI_BALANCE")
-    self:drawText(balanceText, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, balanceText)/2), z+fontH, 1,1,1,1, UIFont.Medium)
-
-    local blockingMessage = getText("IGUI_BANKLOCKED")
-    self.blocker:drawText(blockingMessage, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, blockingMessage) / 2), (self.height / 3) - 5, 1,1,1,1, UIFont.Medium)
 end
-
-
----if (isAdmin() or isCoopHost() or getDebug()) then
 
 function bankWindow:render()
 
     if self.mapObject and self.mapObject:getModData().bankObjID then self.bankObj = CLIENT_BANK_ACCOUNTS[self.mapObject:getModData().bankObjID] end
     if self.bankObj and self.mapObject and not self.mapObject:getModData().bankObjID then self.bankObj = nil end
 
-    self:updateButtons()
-    
+    local z = 15
+    local fontH = getTextManager():MeasureFont(self.font)
+
     local player = getPlayer()
     local playerFaction = Faction.getPlayerFaction(player)
-    local isOwner = playerFaction:isOwner(player:getUsername())
-    local managed = (isAdmin() or isCoopHost() or getDebug()) or isOwner
+    local isOwner = playerFaction and playerFaction:isOwner(player:getUsername())
+    local managed = (isAdmin() or isCoopHost() or getDebug())
     local blocked = true
 
-    if playerFaction and (not self.bankObj.factionLocked) or (self.bankObj.factionLocked and playerFaction==Faction.getFaction(self.bankObj.faction)) then
-        blocked = false
+    self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
+
+    if not managed then
+        local bankName = getText("IGUI_BANK")
+        if self.bankObj then bankName = self.bankObj.faction.." "..bankName end
+        self:drawText(bankName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, bankName)/2), z, 1,1,1,1, UIFont.Medium)
     end
 
-    self.factionLocked:setVisible(managed and not blocked)
+    if playerFaction and self.bankObj and (not self.bankObj.factionLocked) or (self.bankObj.factionLocked and playerFaction==Faction.getFaction(self.bankObj.faction)) then
+        blocked = false
+    end
+    self.factionLocked:setVisible((managed or isOwner) and not blocked)
+    self.manageFaction:setVisible((managed or isOwner) and not blocked)
+
+    local blockingMessage = getText("IGUI_BANKLOCKED")
+    if not playerFaction then blockingMessage = getText("IGUI_NOFACTION") end
+
+    if blocked then
+        self.blocker:drawText(blockingMessage, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, blockingMessage) / 2), (self.height / 3) - 5, 1,1,1,1, UIFont.Medium)
+    else
+        local balanceText = getText("IGUI_BALANCE")
+        self:drawText(balanceText, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, balanceText)/2), z+fontH, 1,1,1,1, UIFont.Medium)
+    end
 
     self.blocker:setVisible(blocked)
+
     self:drawRectBorder(0, 0, self.width, self.height, self.borderColor.a, self.borderColor.r, self.borderColor.g, self.borderColor.b)
     self.no:bringToTop()
 end
