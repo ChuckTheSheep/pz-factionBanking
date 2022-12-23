@@ -26,6 +26,32 @@ local function onClientCommand(_module, _command, _player, _data)
         ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,transferValue,factionID)
     end
 
+    if _command == "removeBank" then
+
+        local x, y, z, mapObjName = _data.x, _data.y, _data.z, _data.mapObjName
+        local sq = getSquare(x, y, z)
+        if not sq then print("ERROR: Could not find square for assigning bank.") return end
+
+        local objects = sq:getObjects()
+        if not objects then print("ERROR: Could not find objects for assigning bank.") return end
+
+        local foundObjToApplyTo
+        for i=0,objects:size()-1 do
+            ---@type IsoObject|MapObjects
+            local object = objects:get(i)
+            if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getMapObjectName(object)==mapObjName then
+                local objMD = object:getModData()
+                if objMD and objMD.factionBankID then
+                    foundObjToApplyTo = object
+                end
+            end
+        end
+        if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
+        local foundObjToApplyToModData = foundObjToApplyTo:getModData()
+        foundObjToApplyToModData.factionBankID = nil
+        foundObjToApplyToModData.factionBankLocked = nil
+        foundObjToApplyTo:transmitModData()
+    end
 
     if _command == "assignBank" then
 
@@ -45,8 +71,7 @@ local function onClientCommand(_module, _command, _player, _data)
 
                 local objMD = object:getModData()
                 if objMD and objMD.factionBankID and not GLOBAL_BANK_ACCOUNTS[objMD.factionBankID] then objMD.factionBankID = nil end
-
-                if _command ~= "clearStoreFromMapObj" and objMD and objMD.factionBankID then
+                if objMD and objMD.factionBankID then
                     print("WARNING: ".._command.." failed: Matching object ID: ("..GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID].name.."); bypassed.")
                 else
                     foundObjToApplyTo = object
@@ -55,11 +80,13 @@ local function onClientCommand(_module, _command, _player, _data)
         end
 
         if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
-        ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID,factionLocked)
+        ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
 
         triggerEvent("BANKING_ServerModDataReady")
 
-        foundObjToApplyTo:getModData().factionBankID = bankID
+        local foundObjToApplyToModData = foundObjToApplyTo:getModData()
+        foundObjToApplyToModData.factionBankID = bankID
+        foundObjToApplyToModData.factionBankLocked = factionLocked
         foundObjToApplyTo:transmitModData()
     end
 

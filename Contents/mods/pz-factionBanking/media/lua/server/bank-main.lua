@@ -7,7 +7,6 @@ ACCOUNTS_HANDLER = {}
 local account = {}
 account.faction = false
 account.owner = false
-account.factionLocked = true
 account.amount = 0
 account.usedByHistory = {} --[PID] = {username=false,balance=0}
 account.dead = false
@@ -57,9 +56,8 @@ function ACCOUNTS_HANDLER.parseDeadAccounts(playerObj,playerID)
     for _,factionID in pairs(removeEntries) do GLOBAL_BANK_ACCOUNTS[factionID] = nil end
 end
 
-function ACCOUNTS_HANDLER.getOrSetFactionAccount(faction,factionLocked)
+function ACCOUNTS_HANDLER.getOrSetFactionAccount(faction)
     local matchingAccount = GLOBAL_BANK_ACCOUNTS[faction] or ACCOUNTS_HANDLER.new(faction)
-    matchingAccount.factionLocked = matchingAccount.factionLocked or factionLocked
     return matchingAccount
 end
 
