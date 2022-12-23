@@ -4,8 +4,9 @@ IGUI_EN = {
     IGUI_INTEREST_RATE = "Interest Rate",
     IGUI_BANK = "Bank",
     IGUI_BALANCE = "Balance",
+    IGUI_REMOVE = "Remove",
     IGUI_FACTIONLOCKED = "Faction Locked",
     IGUI_BANKLOCKED = "This bank is locked to members only.",
-    IGUI_NOFACTION = "You need a faction to use any bank.",
+    IGUI_NOFACTION = "You need to be in a faction to use any bank.",
     IGUI_FACTIONLOCKED_TOOLTIP = "If true, only faction members can use this bank.",
 }

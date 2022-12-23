@@ -14,28 +14,10 @@ function bankWindow:initialise()
     ISPanelJoypad.initialise(self)
     local btnWid = 100
     local btnHgt = 25
-    local padBottom = 10
-    local x = (self.width / 2)-15
-    local y = (self.height*0.6)
+    local pad = 10
 
-    local bankName = "Bank"
-    if self.bankObj then bankName = self.bankObj.faction.." "..getText("IGUI_BANK") end
-
-    self.manageFaction = ISTextEntryBox:new(bankName, 10, 10, self.width-20, btnHgt)
-    self.manageFaction:initialise()
-    self.manageFaction:instantiate()
-    self.manageFaction.font = UIFont.Medium
-    self.manageFaction.borderColor = { r = 1, g = 0, b = 0, a = 0.7 }
-    self:addChild(self.manageFaction)
-
-    self.factionLocked = ISTickBox:new(self.x+10, self.y+10, 18, 18, "", self, nil)
-    self.factionLocked.textColor = { r = 1, g = 0, b = 0, a = 0.7 }
-    self.factionLocked.tooltip = getText("IGUI_FACTIONLOCKED_TOOLTIP")
-    self.factionLocked:initialise()
-    self.factionLocked:instantiate()
-    self.factionLocked.selected[1] = true
-    self.factionLocked:addOption(getText("IGUI_FACTIONLOCKED"))
-    self:addChild(self.factionLocked)
+    local bankName = "No Faction Set"
+    if self.bankAccount then bankName = self.bankAccount.faction end
 
     self.blocker = ISPanel:new(0,0, self.width, self.height)
     self.blocker.moveWithMouse = true
@@ -43,6 +25,36 @@ function bankWindow:initialise()
     self.blocker:instantiate()
     self.blocker:drawRect(0, 0, self.blocker.width, self.blocker.height, 0.8, 0, 0, 0)
     self:addChild(self.blocker)
+
+    self.manageFaction = ISTextEntryBox:new(bankName, pad, pad, self.width-20, btnHgt-4)
+    self.manageFaction:initialise()
+    self.manageFaction:instantiate()
+    self.manageFaction.font = UIFont.Medium
+    self.manageFaction.textColor = { r = 1, g = 0, b = 0, a = 0.7 }
+    self.manageFaction.borderColor = { r = 1, g = 0, b = 0, a = 0.7 }
+    self:addChild(self.manageFaction)
+
+    self.factionLocked = ISTickBox:new(10, self.manageFaction.y+self.manageFaction.height, 18, 18, "", self, nil)
+    self.factionLocked.tooltip = getText("IGUI_FACTIONLOCKED_TOOLTIP")
+    self.factionLocked:initialise()
+    self.factionLocked:instantiate()
+    self.factionLocked.selected[1] = true
+    self.factionLocked:addOption(getText("IGUI_FACTIONLOCKED"))
+    self:addChild(self.factionLocked)
+
+    self.delete = ISButton:new(self.width-btnWid-pad, self:getHeight()-pad-btnHgt, btnWid, btnHgt, getText("IGUI_REMOVE"), self, bankWindow.onClick)
+    self.delete.internal = "DELETE"
+    self.delete.borderColor = {r=1, g=1, b=1, a=0.4}
+    self.delete:initialise()
+    self.delete:instantiate()
+    self:addChild(self.delete)
+
+    self.no = ISButton:new((self.width/2)-(btnWid/2), self:getHeight()-pad-btnHgt, btnWid, btnHgt, getText("UI_Cancel"), self, bankWindow.onClick)
+    self.no.internal = "CANCEL"
+    self.no.borderColor = {r=1, g=1, b=1, a=0.4}
+    self.no:initialise()
+    self.no:instantiate()
+    self:addChild(self.no)
 end
 
 
@@ -79,14 +91,15 @@ end
 
 
 function bankWindow:prerender()
+    self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
+
 end
 
 function bankWindow:render()
 
-    if self.mapObject and self.mapObject:getModData().bankObjID then self.bankObj = CLIENT_BANK_ACCOUNTS[self.mapObject:getModData().bankObjID] end
-    if self.bankObj and self.mapObject and not self.mapObject:getModData().bankObjID then self.bankObj = nil end
+    if self.mapObject and self.mapObject:getModData().factionBankID then self.bankAccount = CLIENT_BANK_ACCOUNTS[self.mapObject:getModData().factionBankID] end
+    if self.bankAccount and self.mapObject and not self.mapObject:getModData().factionBankID then self.bankAccount = nil end
 
-    local z = 15
     local fontH = getTextManager():MeasureFont(self.font)
 
     local player = getPlayer()
@@ -95,34 +108,62 @@ function bankWindow:render()
     local managed = (isAdmin() or isCoopHost() or getDebug())
     local blocked = true
 
-    self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-
     if not managed then
         local bankName = getText("IGUI_BANK")
-        if self.bankObj then bankName = self.bankObj.faction.." "..bankName end
-        self:drawText(bankName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, bankName)/2), z, 1,1,1,1, UIFont.Medium)
+        if self.bankAccount then bankName = self.bankAccount.faction.." "..bankName end
+        self:drawText(bankName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, bankName)/2), 25, 1,1,1,1, UIFont.Medium)
     end
 
-    if playerFaction and self.bankObj and (not self.bankObj.factionLocked) or (self.bankObj.factionLocked and playerFaction==Faction.getFaction(self.bankObj.faction)) then
-        blocked = false
+    if (playerFaction and self.bankAccount and self.bankAccount~=false) then
+        if (not self.bankAccount.factionLocked) or (self.bankAccount.factionLocked and playerFaction==Faction.getFaction(self.bankAccount.faction)) then
+            blocked = false
+        end
     end
-    self.factionLocked:setVisible((managed or isOwner) and not blocked)
-    self.manageFaction:setVisible((managed or isOwner) and not blocked)
+
+    self.factionLocked:setVisible((managed or isOwner))
+    self.delete:setVisible((managed or isOwner))
+    self.manageFaction:setVisible((managed or isOwner))
 
     local blockingMessage = getText("IGUI_BANKLOCKED")
     if not playerFaction then blockingMessage = getText("IGUI_NOFACTION") end
 
     if blocked then
-        self.blocker:drawText(blockingMessage, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, blockingMessage) / 2), (self.height / 3) - 5, 1,1,1,1, UIFont.Medium)
+        self.blocker:drawText(blockingMessage, self.width/2 - (getTextManager():MeasureStringX(UIFont.Small, blockingMessage) / 2), (self.height*0.66)-fontH, 1,1,1,1, UIFont.Small)
     else
         local balanceText = getText("IGUI_BALANCE")
-        self:drawText(balanceText, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, balanceText)/2), z+fontH, 1,1,1,1, UIFont.Medium)
+        self:drawText(balanceText..":", self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, balanceText)/2), (self.height*0.66)-fontH, 1,1,1,1, UIFont.Medium)
     end
 
     self.blocker:setVisible(blocked)
 
     self:drawRectBorder(0, 0, self.width, self.height, self.borderColor.a, self.borderColor.r, self.borderColor.g, self.borderColor.b)
     self.no:bringToTop()
+    self.delete:bringToTop()
+    self.factionLocked:bringToTop()
+    self.manageFaction:bringToTop()
+
+    self.manageFaction.lastInput = self.manageFaction.lastInput or ""
+    self.factionLocked.lastInput = self.factionLocked.lastInput or ""
+
+    local currentMFInput = self.manageFaction:getInternalText()
+    local currentFLInput = self.factionLocked.selected[1]
+    local needUpdate = (self.manageFaction.lastInput ~= currentMFInput) or (self.factionLocked.lastInput ~= self.factionLocked.selected[1])
+
+    if needUpdate then
+        self.manageFaction.lastInput = currentMFInput
+        local faction = Faction.getFaction(currentMFInput)
+
+        if faction then
+            self.manageFaction.textColor = { r = 1, g = 1, b = 1, a = 0.8 }
+            self.manageFaction.borderColor = { r = 1, g = 1, b = 1, a = 0.8 }
+            local x, y, z, mapObjName = self.mapObject:getX(), self.mapObject:getY(), self.mapObject:getZ(), _internal.getMapObjectName(self.mapObject)
+            sendClientCommand("bank", "assignBank", { bankID=currentMFInput, factionLocked=currentFLInput, x=x, y=y, z=z, mapObjName=mapObjName })
+        else
+            self.manageFaction.textColor = { r = 1, g = 0, b = 0, a = 0.7 }
+            self.manageFaction.borderColor = { r = 1, g = 0, b = 0, a = 0.7 }
+        end
+
+    end
 end
 
 
@@ -170,7 +211,7 @@ end
 function bankWindow:RestoreLayout(name, layout) ISLayoutManager.DefaultRestoreWindow(self, layout) end
 function bankWindow:SaveLayout(name, layout) ISLayoutManager.DefaultSaveWindow(self, layout) end
 
-function bankWindow:new(x, y, width, height, player, bankObj, mapObj)
+function bankWindow:new(x, y, width, height, player, bankAccount, mapObj)
     local o = {}
     x = getCore():getScreenWidth() / 2 - (width / 2)
     y = getCore():getScreenHeight() / 2 - (height / 2)
@@ -185,14 +226,14 @@ function bankWindow:new(x, y, width, height, player, bankObj, mapObj)
     o.height = height
     o.player = player
     o.mapObject = mapObj
-    o.bankObj = bankObj
+    o.bankAccount = bankAccount
     o.moveWithMouse = true
     bankWindow.instance = o
     return o
 end
 
 
-function bankWindow:onBrowse(bankObj, mapObj)
+function bankWindow:onBrowse(bankAccount, mapObj)
     if bankWindow.instance and bankWindow.instance:isVisible() then
         bankWindow.instance:setVisible(false)
         bankWindow.instance:removeFromUIManager()
@@ -200,7 +241,7 @@ function bankWindow:onBrowse(bankObj, mapObj)
 
     triggerEvent("BANKING_ClientModDataReady")
 
-    local ui = bankWindow:new(50,50,555,555, getPlayer(), bankObj, mapObj)
+    local ui = bankWindow:new(50,50,250,175, getPlayer(), bankAccount, mapObj)
     ui:initialise()
     ui:addToUIManager()
 end

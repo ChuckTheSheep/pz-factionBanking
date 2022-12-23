@@ -6,11 +6,11 @@ local function validBankObject(mapObject)
     if mapObject then
         local mapObjectModData = mapObject:getModData()
         if mapObjectModData then
-            local bankObjID = mapObjectModData.bankObjID
-            if bankObjID then
-                local bankObj = CLIENT_BANK_ACCOUNTS[bankObjID]
+            local factionBankID = mapObjectModData.factionBankID
+            if factionBankID then
+                local account = CLIENT_BANK_ACCOUNTS[factionBankID]
                 canView = false
-                if bankObj.isBeingManaged and (isAdmin() or isCoopHost() or getDebug()) then canView = true end
+                if account.isBeingManaged and (isAdmin() or isCoopHost() or getDebug()) then canView = true end
             end
         end
     end
@@ -36,8 +36,8 @@ function ISInventoryPage:dropItemsInContainer(button)
     if container then
         local mapObj = container:getParent()
         if mapObj then
-            local bankObjID = mapObj:getModData().bankObjID
-            if bankObjID then allow = validBankObject(mapObj) end
+            local factionBankID = mapObj:getModData().factionBankID
+            if factionBankID then allow = validBankObject(mapObj) end
         end
     end
     if allow then ISInventoryPage_dropItemsInContainer(self, button)

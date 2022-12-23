@@ -29,7 +29,7 @@ local function onClientCommand(_module, _command, _player, _data)
 
     if _command == "assignBank" then
 
-        local bankID, x, y, z, mapObjName = _data.bankID, _data.x, _data.y, _data.z, _data.mapObjName
+        local bankID, x, y, z, mapObjName, factionLocked = _data.bankID, _data.x, _data.y, _data.z, _data.mapObjName, _data.factionLocked
         local sq = getSquare(x, y, z)
         if not sq then print("ERROR: Could not find square for assigning bank.") return end
 
@@ -44,10 +44,10 @@ local function onClientCommand(_module, _command, _player, _data)
             if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getMapObjectName(object)==mapObjName then
 
                 local objMD = object:getModData()
-                if objMD and objMD.factionBankObjID and not GLOBAL_BANK_ACCOUNTS[objMD.factionBankObjID] then objMD.factionBankObjID = nil end
+                if objMD and objMD.factionBankID and not GLOBAL_BANK_ACCOUNTS[objMD.factionBankID] then objMD.factionBankID = nil end
 
-                if _command ~= "clearStoreFromMapObj" and objMD and objMD.factionBankObjID then
-                    print("WARNING: ".._command.." failed: Matching object ID: ("..GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankObjID].name.."); bypassed.")
+                if _command ~= "clearStoreFromMapObj" and objMD and objMD.factionBankID then
+                    print("WARNING: ".._command.." failed: Matching object ID: ("..GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID].name.."); bypassed.")
                 else
                     foundObjToApplyTo = object
                 end
@@ -55,8 +55,12 @@ local function onClientCommand(_module, _command, _player, _data)
         end
 
         if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
-        foundObjToApplyTo:getModData().factionBankObjID = bankID
+        ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID,factionLocked)
+
         triggerEvent("BANKING_ServerModDataReady")
+
+        foundObjToApplyTo:getModData().factionBankID = bankID
+        foundObjToApplyTo:transmitModData()
     end
 
 end

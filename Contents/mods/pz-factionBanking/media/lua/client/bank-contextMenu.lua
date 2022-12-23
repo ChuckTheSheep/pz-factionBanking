@@ -3,11 +3,9 @@ require "bank-window"
 local CONTEXT_HANDLER = {}
 
 ---@param mapObject MapObjects|IsoObject
-function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, bankObj)
-    if not bankObj then
-        if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
-    end
-    bankWindow:onBrowse(bankObj, mapObject)
+function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, bankAccount)
+    if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
+    bankWindow:onBrowse(bankAccount, mapObject)
 end
 
 
@@ -30,13 +28,13 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
         local object = square:getObjects():get(i)
         if object and (not instanceof(object, "IsoWorldInventoryObject")) then
 
-            if object:getModData().bankObjID then
-                local bankObj = CLIENT_BANK_ACCOUNTS[object:getModData().bankObjID]
-                if not bankObj then object:getModData().bankObjID = nil end
+            if object:getModData().factionBankID then
+                local account = CLIENT_BANK_ACCOUNTS[object:getModData().factionBankID]
+                if not account then object:getModData().factionBankID = nil end
             end
 
-            if object:getModData().bankObjID or (isAdmin() or isCoopHost() or getDebug()) then
-                validObjects[object] = CLIENT_BANK_ACCOUNTS[object:getModData().bankObjID] or false
+            if object:getModData().factionBankID or (isAdmin() or isCoopHost() or getDebug()) then
+                validObjects[object] = CLIENT_BANK_ACCOUNTS[object:getModData().factionBankID] or false
                 validObjectCount = validObjectCount+1
             end
         end
@@ -51,14 +49,14 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
             currentMenu = subMenu
         end
 
-        for mapObject,bankObject in pairs(validObjects) do
+        for mapObject,bankAccount in pairs(validObjects) do
             local objectName = _internal.getMapObjectDisplayName(mapObject)
             if objectName then
                 local contextText = objectName.." [ "..getText("ContextMenu_ASSIGN_BANK").." ]"
-                if bankObject then
-                    contextText = getText("ContextMenu_BANK_AT").." "..(bankObject.name or objectName)
+                if bankAccount then
+                    contextText = getText("ContextMenu_BANK_AT").." "..(bankAccount.name or objectName)
                 end
-                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, mapObject, bankObject)
+                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, mapObject, bankAccount)
             end
         end
     end
