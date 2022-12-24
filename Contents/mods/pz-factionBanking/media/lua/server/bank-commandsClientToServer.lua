@@ -63,7 +63,7 @@ local function onClientCommand(_module, _command, _player, _data)
                     objMD.factionBankID = nil
                 end
                 if objMD and objMD.factionBankID and accObj then
-                    print("WARNING: ".._command.." failed: Matching object ID: ("..accObj.name.."); bypassed.")
+                    print("WARNING: ".._command.." failed: Matching object ID: ("..accObj.faction.."); bypassed.")
                 else
                     foundObjToApplyTo = object
                 end

@@ -76,7 +76,7 @@ function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requ
         --deposits = negative, withdraws = positive
         factionAccount.amount = factionAccount.amount+requestAmount
         WALLET_HANDLER.validateMoneyOrWallet(playerWallet,playerObj,0-requestAmount)
-        local balanceBefore = a(ccount.usedByHistory[playerID] and account.usedByHistory[playerID].balance) or 0
+        local balanceBefore = (account.usedByHistory[playerID] and account.usedByHistory[playerID].balance) or 0
         account.usedByHistory[playerID] = {username=playerUsername,balance=balanceBefore+requestAmount}
         triggerEvent("SHOPPING_ServerModDataReady")
         triggerEvent("BANKING_ServerModDataReady")
