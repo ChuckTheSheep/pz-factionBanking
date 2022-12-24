@@ -6,21 +6,8 @@ local function onClientCommand(_module, _command, _player, _data)
     if _module ~= "bank" then return end
     _data = _data or {}
 
-    if _command == "ImportBanks" then
-        _internal.copyAgainst(GLOBAL_BANK_ACCOUNTS, _data.banks)
-        triggerEvent("BANKING_ServerModDataReady")
-    end
-
-    --[[
-    if _command == "getOrSetWallet" then
-        print("SETTING PLAYER WALLET: ".._data.playerID.."  for user:".._data.steamID)
-        local playerID, steamID, playerUsername = _data.playerID, _data.steamID, _data.playerUsername
-        WALLET_HANDLER.getOrSetPlayerWallet(playerID,steamID,playerUsername)
-        triggerEvent("BANKING_ServerModDataReady")
-    end
-    --]]
-
     if _command == "transferFunds" then
+        print("transferFunds")
         local transferValue, factionID = _data.transferValue, _data.factionID
         local playerObj, playerID, playerUsername = _data.playerObj, _data.playerID, _data.playerUsername
         ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,transferValue,factionID)
@@ -51,6 +38,7 @@ local function onClientCommand(_module, _command, _player, _data)
         foundObjToApplyToModData.factionBankID = nil
         foundObjToApplyToModData.factionBankLocked = nil
         foundObjToApplyTo:transmitModData()
+        triggerEvent("BANKING_ServerModDataReady")
     end
 
     if _command == "assignBank" then
@@ -69,10 +57,13 @@ local function onClientCommand(_module, _command, _player, _data)
             local object = objects:get(i)
             if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getMapObjectName(object)==mapObjName then
 
+                local accObj = GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID]
                 local objMD = object:getModData()
-                if objMD and objMD.factionBankID and not GLOBAL_BANK_ACCOUNTS[objMD.factionBankID] then objMD.factionBankID = nil end
-                if objMD and objMD.factionBankID then
-                    print("WARNING: ".._command.." failed: Matching object ID: ("..GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID].name.."); bypassed.")
+                if objMD and objMD.factionBankID and not accObj then
+                    objMD.factionBankID = nil
+                end
+                if objMD and objMD.factionBankID and accObj then
+                    print("WARNING: ".._command.." failed: Matching object ID: ("..accObj.name.."); bypassed.")
                 else
                     foundObjToApplyTo = object
                 end
@@ -81,13 +72,11 @@ local function onClientCommand(_module, _command, _player, _data)
 
         if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
         ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
-
-        triggerEvent("BANKING_ServerModDataReady")
-
         local foundObjToApplyToModData = foundObjToApplyTo:getModData()
         foundObjToApplyToModData.factionBankID = bankID
         foundObjToApplyToModData.factionBankLocked = factionLocked
         foundObjToApplyTo:transmitModData()
+        triggerEvent("BANKING_ServerModDataReady")
     end
 
 end

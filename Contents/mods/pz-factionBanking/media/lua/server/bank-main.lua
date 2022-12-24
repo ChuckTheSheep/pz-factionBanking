@@ -1,4 +1,5 @@
 require "bank-globalModDataServer"
+require "shop-commandsClientToServer"
 require "bank-shared"
 require "shop-main"
 
@@ -75,8 +76,9 @@ function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requ
         --deposits = negative, withdraws = positive
         factionAccount.amount = factionAccount.amount+requestAmount
         WALLET_HANDLER.validateMoneyOrWallet(playerWallet,playerObj,0-requestAmount)
-        local balanceBefore = account.usedByHistory[playerID].balance
+        local balanceBefore = a(ccount.usedByHistory[playerID] and account.usedByHistory[playerID].balance) or 0
         account.usedByHistory[playerID] = {username=playerUsername,balance=balanceBefore+requestAmount}
+        triggerEvent("SHOPPING_ServerModDataReady")
         triggerEvent("BANKING_ServerModDataReady")
     end
 end

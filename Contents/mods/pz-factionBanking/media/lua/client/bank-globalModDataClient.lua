@@ -1,5 +1,6 @@
 ---Credit to Konijima (Konijima#9279) for clearing up networking :thumbsup:
 require "bank-commandsServerToClient"
+require "shop-globalModDataClient"
 require "shop-shared"
 
 CLIENT_BANK_ACCOUNTS = {}
@@ -25,16 +26,3 @@ local function receiveGlobalModData(name, data)
     end
 end
 Events.OnReceiveGlobalModData.Add(receiveGlobalModData)
-
-
-function getWalletBalance(player)
-    local walletBalance = 0
-    if player and player:getModData() then
-        local pID = player:getModData().wallet_UUID
-        if pID then
-            local wallet = CLIENT_WALLETS[pID]
-            if wallet then walletBalance = wallet.amount end
-        end
-    end
-    return walletBalance
-end
