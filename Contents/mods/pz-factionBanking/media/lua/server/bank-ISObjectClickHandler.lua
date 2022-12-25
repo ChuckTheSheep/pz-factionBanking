@@ -4,10 +4,8 @@ local function validBankObject(mapObject)
     local canView = true
     local factionBankID = mapObject:getModData().factionBankID
     if factionBankID then
-        local bankObj = GLOBAL_STORES[factionBankID]
-        --TODO: Check faction for access.
-        if bankObj.isBeingManaged and (isAdmin() or isCoopHost() or getDebug()) then canView = true end
         canView = false
+        if (isAdmin() or isCoopHost() or getDebug()) then canView = true end
     end
     return canView
 end
