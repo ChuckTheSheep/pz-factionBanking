@@ -24,7 +24,6 @@ function bankWindow:initialise()
     self.selectFaction:initialise()
     self.selectFaction:instantiate()
     self:addChild(self.selectFaction)
-    self:populateComboList()
 
     local yOffset = self.selectFaction.y+self.selectFaction.height+15
 
@@ -127,9 +126,11 @@ end
 
 
 function bankWindow:populateComboList()
+    if self.populatedComboList then return end
+    self.populatedComboList = true
     self.selectFaction:clear()
     self.selectFaction:addOptionWithData("NONE", false)
-
+    self.selectFaction.selected = self.selectFaction.selected or 1
     local factions = Faction.getFactions()
     if factions then
         for i=0,factions:size()-1 do
@@ -140,14 +141,15 @@ function bankWindow:populateComboList()
                 self.selectFaction:addOption(factionName)
                 if self.mapObject then
                     local bankID = self.mapObject:getModData().factionBankID
-                    if bankID and bankID==factionName then self.selectFaction:select(bankID) end
+                    if bankID and bankID==factionName then
+                        self.selectFaction:select(bankID)
+                    end
                 end
             end
         end
     end
 
     self.selectFaction:addOptionWithData("REMOVE", false)
-    if (not self.selectFaction.selected) or (self.selectFaction.selected > #self.selectFaction.options) then self.selectFaction.selected = 1 end
 end
 
 
@@ -161,14 +163,8 @@ end
 
 
 function bankWindow:prerender()
+    self:populateComboList()
     self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-end
-
-function bankWindow:forceUpdate()
-    self.withdrawSlider.lastWalletBalance = -1
-    self.withdrawSlider.lastBankBalance = -1
-    self.selectFaction.lastSelected = 1
-    triggerEvent("BANKING_ClientModDataReady")
 end
 
 
@@ -180,15 +176,15 @@ function bankWindow:render()
     local blocked = true
 
     local mapObjModData = (self.mapObject and self.mapObject:getModData())
-    local bankingFactionID = mapObjModData.factionBankID
-    self.currentAccount = CLIENT_BANK_ACCOUNTS[(bankingFactionID~=false and bankingFactionID) or playerFaction:getName()]
+    local bankingFactionID = (mapObjModData.factionBankID ~= true and mapObjModData.factionBankID) or (playerFaction and playerFaction:getName())
+    self.currentAccount = bankingFactionID and CLIENT_BANK_ACCOUNTS[bankingFactionID]
 
     --print("playerFactionID:"..tostring( (playerFaction and playerFaction:getName()) or nil) )
     --print("bankingFactionID:"..tostring(bankingFactionID))
     --print("currentAccountID:"..tostring((bankingFactionID~=false and bankingFactionID) or playerFaction:getName()))
 
     if not managed then
-        local bankName = mapObjModData.factionBankID.." "..getText("IGUI_BANK")
+        local bankName = (bankingFactionID or getText("IGUI_PUBLIC")).." "..getText("IGUI_BANK")
         self:drawText(bankName, self.width/2 - (getTextManager():MeasureStringX(UIFont.Medium, bankName)/2), self.selectFaction.y, 1,1,1,1, UIFont.Medium)
     end
 
@@ -201,12 +197,17 @@ function bankWindow:render()
             blocked = false
         end
     end
+
     self.selectFaction:setVisible(managed)
+    self.transferTypeSwitch:setVisible(not blocked)
+    self.transferProceed:setVisible(not blocked)
+    self.transferEntry:setVisible(not blocked)
+    self.withdrawSlider:setVisible(not blocked)
 
     local currentWalletBalance, currentBankBalance = (getWalletBalance(self.player) or 0), (self.currentAccount and self.currentAccount.amount) or 0
 
     if blocked then
-        self.blocker:drawText(blockingMessage, self.width/2-(getTextManager():MeasureStringX(UIFont.Small, blockingMessage)/2), (self.height*0.66)-fontH, 1,1,1,1, UIFont.Small)
+        self.blocker:drawText(blockingMessage, self.width/2-(getTextManager():MeasureStringX(UIFont.Small, blockingMessage)/2), (self.height/2)-fontH, 1,1,1,1, UIFont.Small)
     else
         local pad = 10
         local textY = self.no.y-(fontH*2)-(pad*2)
@@ -245,21 +246,19 @@ function bankWindow:render()
     end
 
     self.selectFaction.lastSelected = self.selectFaction.lastSelected or 1
-    local currentFactionSelected = self.selectFaction.selected
-    if self.selectFaction.selected~=1 and self.selectFaction.lastInput ~= currentFactionSelected then
+    if self.selectFaction.selected~=1 and self.selectFaction.selected ~= self.selectFaction.lastSelected then
+        self.selectFaction.lastSelected = self.selectFaction.selected
+
+        local x, y, z, mapObjName = self.mapObject:getX(), self.mapObject:getY(), self.mapObject:getZ(), _internal.getMapObjectName(self.mapObject)
+
         if self.selectFaction.selected == #self.selectFaction.options then
-            local x, y, z, mapObjName = self.mapObject:getX(), self.mapObject:getY(), self.mapObject:getZ(), _internal.getMapObjectName(self.mapObject)
             sendClientCommand("bank", "removeBank", { x=x, y=y, z=z, mapObjName=mapObjName })
             self:setVisible(false)
             self:removeFromUIManager()
         end
 
-        self.selectFaction.lastSelected = currentFactionSelected
-
         local factionSelectedName = self.selectFaction:getSelectedText()
-        local faction = Faction.getFaction(factionSelectedName)
-        if faction then
-            local x, y, z, mapObjName = self.mapObject:getX(), self.mapObject:getY(), self.mapObject:getZ(), _internal.getMapObjectName(self.mapObject)
+        if Faction.factionExist(factionSelectedName) then
             sendClientCommand("bank", "assignBank", { bankID=factionSelectedName, x=x, y=y, z=z, mapObjName=mapObjName })
         end
     end

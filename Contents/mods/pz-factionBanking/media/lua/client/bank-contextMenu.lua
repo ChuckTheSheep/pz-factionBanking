@@ -5,8 +5,8 @@ local CONTEXT_HANDLER = {}
 ---@param mapObject MapObjects|IsoObject
 function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, factionID)
     if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
-    mapObject:getModData().factionBankID = false
-    bankWindow:onBrowse(factionID, mapObject)
+    mapObject:getModData().factionBankID = true
+    bankWindow:onBrowse(factionID or true, mapObject)
 end
 
 
@@ -29,6 +29,13 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
         local object = square:getObjects():get(i)
         if object and (not instanceof(object, "IsoWorldInventoryObject")) then
             local factionID = object:getModData().factionBankID
+
+            if factionID and factionID~=true and not Faction.factionExist(factionID) then
+                object:getModData().factionBankID = nil
+                object:transmitModData()
+                factionID = nil
+            end
+
             if factionID or (isAdmin() or isCoopHost() or getDebug()) then
                 validObjects[object] = factionID or false
                 validObjectCount = validObjectCount+1
@@ -49,9 +56,8 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
             local objectName = _internal.getMapObjectDisplayName(mapObject)
             if objectName then
                 local contextText = objectName.." [ "..getText("ContextMenu_ASSIGN_BANK").." ]"
-                if factionID then
-                    contextText = getText("ContextMenu_BANK_AT").." "..(factionID.." "..getText("IGUI_BANK") or objectName)
-                end
+                if factionID==true then factionID = getText("IGUI_PUBLIC") end
+                if factionID then contextText = getText("ContextMenu_BANK_AT").." "..(factionID.." "..getText("IGUI_BANK") or objectName) end
                 currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, mapObject, factionID)
             end
         end

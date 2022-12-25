@@ -1,5 +1,5 @@
 ContextMenu_EN = {
     ContextMenu_BANKS = "Banks",
     ContextMenu_ASSIGN_BANK = "Assign Bank",
-    ContextMenu_BANK_AT = "Access Bank",
+    ContextMenu_BANK_AT = "Access",
 } 

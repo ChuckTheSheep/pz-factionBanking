@@ -27,15 +27,12 @@ local function onClientCommand(_module, _command, _player, _data)
             ---@type IsoObject|MapObjects
             local object = objects:get(i)
             if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getMapObjectName(object)==mapObjName then
-                local objMD = object:getModData()
-                if objMD and objMD.factionBankID then
-                    foundObjToApplyTo = object
-                end
+                foundObjToApplyTo = object
             end
         end
-        if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
-        local foundObjToApplyToModData = foundObjToApplyTo:getModData()
-        foundObjToApplyToModData.factionBankID = nil
+        if not foundObjToApplyTo then print("ERROR: removeBank: No foundObjToApplyTo : "..mapObjName) return end
+
+        foundObjToApplyTo:getModData().factionBankID = nil
         foundObjToApplyTo:transmitModData()
         triggerEvent("BANKING_ServerModDataReady")
     end
@@ -67,10 +64,9 @@ local function onClientCommand(_module, _command, _player, _data)
             end
         end
 
-        if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
+        if not foundObjToApplyTo then print("ERROR: assignBank: No foundObjToApplyTo : "..mapObjName) return end
         ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
-        local foundObjToApplyToModData = foundObjToApplyTo:getModData()
-        foundObjToApplyToModData.factionBankID = bankID
+        foundObjToApplyTo:getModData().factionBankID = bankID
         foundObjToApplyTo:transmitModData()
         triggerEvent("BANKING_ServerModDataReady")
     end
