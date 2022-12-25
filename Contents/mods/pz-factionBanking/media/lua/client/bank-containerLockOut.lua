@@ -2,18 +2,15 @@ require "ISUI/ISInventoryPane"
 require "ISUI/ISInventoryPage"
 
 local function validBankObject(mapObject)
+    if not mapObject then return end
+
     local canView = true
-    if mapObject then
-        local mapObjectModData = mapObject:getModData()
-        if mapObjectModData then
-            local factionBankID = mapObjectModData.factionBankID
-            if factionBankID then
-                local account = CLIENT_BANK_ACCOUNTS[factionBankID]
-                canView = false
-                if account.isBeingManaged and (isAdmin() or isCoopHost() or getDebug()) then canView = true end
-            end
-        end
+    local factionBankID = mapObject and mapObject:getModData().factionBankID
+    if factionBankID then
+        canView = false
+        if (isAdmin() or isCoopHost() or getDebug()) then canView = true end
     end
+
     return canView
 end
 
