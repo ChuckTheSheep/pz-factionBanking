@@ -36,14 +36,13 @@ local function onClientCommand(_module, _command, _player, _data)
         if not foundObjToApplyTo then print("ERROR: No foundObjToApplyTo.") return end
         local foundObjToApplyToModData = foundObjToApplyTo:getModData()
         foundObjToApplyToModData.factionBankID = nil
-        foundObjToApplyToModData.factionBankLocked = nil
         foundObjToApplyTo:transmitModData()
         triggerEvent("BANKING_ServerModDataReady")
     end
 
     if _command == "assignBank" then
 
-        local bankID, x, y, z, mapObjName, factionLocked = _data.bankID, _data.x, _data.y, _data.z, _data.mapObjName, _data.factionLocked
+        local bankID, x, y, z, mapObjName = _data.bankID, _data.x, _data.y, _data.z, _data.mapObjName
         local sq = getSquare(x, y, z)
         if not sq then print("ERROR: Could not find square for assigning bank.") return end
 
@@ -59,14 +58,12 @@ local function onClientCommand(_module, _command, _player, _data)
 
                 local accObj = GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID]
                 local objMD = object:getModData()
-                if objMD and objMD.factionBankID and not accObj then
+                if objMD and objMD.factionBankID and (not accObj or (accObj and accObj.dead)) then
                     objMD.factionBankID = nil
+                    object:transmitModData()
                 end
-                if objMD and objMD.factionBankID and accObj then
-                    print("WARNING: ".._command.." failed: Matching object ID: ("..accObj.faction.."); bypassed.")
-                else
-                    foundObjToApplyTo = object
-                end
+
+                foundObjToApplyTo = object
             end
         end
 
@@ -74,7 +71,6 @@ local function onClientCommand(_module, _command, _player, _data)
         ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
         local foundObjToApplyToModData = foundObjToApplyTo:getModData()
         foundObjToApplyToModData.factionBankID = bankID
-        foundObjToApplyToModData.factionBankLocked = factionLocked
         foundObjToApplyTo:transmitModData()
         triggerEvent("BANKING_ServerModDataReady")
     end

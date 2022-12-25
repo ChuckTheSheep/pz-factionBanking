@@ -74,7 +74,7 @@ function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requ
 
     if requestAmount ~= 0 then
         --deposits = negative, withdraws = positive
-        factionAccount.amount = factionAccount.amount+requestAmount
+        factionAccount.amount = _internal.floorCurrency(factionAccount.amount+requestAmount)
         WALLET_HANDLER.validateMoneyOrWallet(playerWallet,playerObj,0-requestAmount)
         local balanceBefore = (account.usedByHistory[playerID] and account.usedByHistory[playerID].balance) or 0
         account.usedByHistory[playerID] = {username=playerUsername,balance=balanceBefore+requestAmount}

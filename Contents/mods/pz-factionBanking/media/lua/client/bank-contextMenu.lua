@@ -3,9 +3,10 @@ require "bank-window"
 local CONTEXT_HANDLER = {}
 
 ---@param mapObject MapObjects|IsoObject
-function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, bankAccount)
+function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, factionID)
     if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
-    bankWindow:onBrowse(bankAccount, mapObject)
+    mapObject:getModData().factionBankID = false
+    bankWindow:onBrowse(factionID, mapObject)
 end
 
 
@@ -27,14 +28,9 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
         ---@type IsoObject|MapObjects
         local object = square:getObjects():get(i)
         if object and (not instanceof(object, "IsoWorldInventoryObject")) then
-
-            if object:getModData().factionBankID then
-                local account = CLIENT_BANK_ACCOUNTS[object:getModData().factionBankID]
-                if not account then object:getModData().factionBankID = nil end
-            end
-
-            if object:getModData().factionBankID or (isAdmin() or isCoopHost() or getDebug()) then
-                validObjects[object] = CLIENT_BANK_ACCOUNTS[object:getModData().factionBankID] or false
+            local factionID = object:getModData().factionBankID
+            if factionID or (isAdmin() or isCoopHost() or getDebug()) then
+                validObjects[object] = factionID or false
                 validObjectCount = validObjectCount+1
             end
         end
@@ -49,14 +45,14 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
             currentMenu = subMenu
         end
 
-        for mapObject,bankAccount in pairs(validObjects) do
+        for mapObject,factionID in pairs(validObjects) do
             local objectName = _internal.getMapObjectDisplayName(mapObject)
             if objectName then
                 local contextText = objectName.." [ "..getText("ContextMenu_ASSIGN_BANK").." ]"
-                if bankAccount then
-                    contextText = getText("ContextMenu_BANK_AT").." "..(bankAccount.name or objectName)
+                if factionID then
+                    contextText = getText("ContextMenu_BANK_AT").." "..(factionID.." "..getText("IGUI_BANK") or objectName)
                 end
-                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, mapObject, bankAccount)
+                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, mapObject, factionID)
             end
         end
     end
