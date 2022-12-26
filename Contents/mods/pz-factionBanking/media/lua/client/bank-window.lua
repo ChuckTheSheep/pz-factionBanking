@@ -183,7 +183,6 @@ function bankWindow:render()
     end
 
     local blockingMessage = getText("IGUI_BANKLOCKED")
-
     if not playerFaction then
         blockingMessage = getText("IGUI_NOFACTION")
     else
