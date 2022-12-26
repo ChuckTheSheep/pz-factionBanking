@@ -1,5 +1,5 @@
 name=Shops and Traders: Faction Banking
 id=pz-faction-banking
-description=Complemtary mod to Shops and Traders, allows for factions to bank their money.
+description=Complementary mod to Shops and Traders, allows for factions to bank their money.
 require=pz-shops-and-traders
 poster=poster.png
