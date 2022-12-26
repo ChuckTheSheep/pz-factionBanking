@@ -141,9 +141,7 @@ function bankWindow:populateComboList()
                 self.selectFaction:addOption(factionName)
                 if self.mapObject then
                     local bankID = self.mapObject:getModData().factionBankID
-                    if bankID and bankID==factionName then
-                        self.selectFaction:select(bankID)
-                    end
+                    if bankID and bankID==factionName then self.selectFaction:select(bankID) end
                 end
             end
         end
@@ -178,10 +176,6 @@ function bankWindow:render()
     local mapObjModData = (self.mapObject and self.mapObject:getModData())
     local bankingFactionID = (mapObjModData.factionBankID ~= true and mapObjModData.factionBankID) or (playerFaction and playerFaction:getName())
     self.currentAccount = bankingFactionID and CLIENT_BANK_ACCOUNTS[bankingFactionID]
-
-    --print("playerFactionID:"..tostring( (playerFaction and playerFaction:getName()) or nil) )
-    --print("bankingFactionID:"..tostring(bankingFactionID))
-    --print("currentAccountID:"..tostring((bankingFactionID~=false and bankingFactionID) or playerFaction:getName()))
 
     if not managed then
         local bankName = (bankingFactionID or getText("IGUI_PUBLIC")).." "..getText("IGUI_BANK")
@@ -292,11 +286,9 @@ function bankWindow:onClick(button)
 
             if value > currentBankBalance then --deposit
                 value = _internal.floorCurrency(value-currentBankBalance)
-                print("deposit value:"..value)
                 sendClientCommand("bank", "transferFunds", {playerID=walletID, playerUsername=pUsername, transferValue=value, factionID=faction:getName()})
             elseif value < currentBankBalance then --withdraw
                 value = _internal.floorCurrency(currentBankBalance-value)
-                print("withdraw value:"..value)
                 sendClientCommand("bank", "transferFunds", {playerID=walletID, playerUsername=pUsername, transferValue=0-value, factionID=faction:getName()})
             end
         end

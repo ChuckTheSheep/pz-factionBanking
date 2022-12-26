@@ -5,7 +5,7 @@ local CONTEXT_HANDLER = {}
 ---@param mapObject MapObjects|IsoObject
 function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, factionID)
     if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
-    mapObject:getModData().factionBankID = true
+    mapObject:getModData().factionBankID = mapObject:getModData().factionBankID or true
     bankWindow:onBrowse(factionID or true, mapObject)
 end
 

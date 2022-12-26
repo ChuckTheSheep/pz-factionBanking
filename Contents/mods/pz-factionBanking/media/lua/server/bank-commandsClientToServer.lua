@@ -7,7 +7,6 @@ local function onClientCommand(_module, _command, _player, _data)
     _data = _data or {}
 
     if _command == "transferFunds" then
-        print("transferFunds")
         local transferValue, factionID = _data.transferValue, _data.factionID
         local playerObj, playerID, playerUsername = _data.playerObj, _data.playerID, _data.playerUsername
         ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,transferValue,factionID)
