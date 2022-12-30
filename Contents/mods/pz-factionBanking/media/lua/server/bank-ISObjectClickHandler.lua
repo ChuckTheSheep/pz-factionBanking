@@ -1,8 +1,17 @@
-require "ISObjectClickHandler"
+local clickHandler = require "shop-ISObjectClickHandler"
 
-local ISObjectClickHandler_doClick = ISObjectClickHandler.doClick
-function ISObjectClickHandler.doClick(object, x, y)
-    if not object then return end
-    local factionBankID = object and object:getModData().factionBankID
-    if not factionBankID then ISObjectClickHandler_doClick(object, x, y) end
+local clickHandler_canInteract = clickHandler.canInteract
+function clickHandler.canInteract(mapObject)
+
+    local canView = clickHandler_canInteract(mapObject)
+
+    if not mapObject then return canView end
+
+    local factionBankID = mapObject and mapObject:getModData().factionBankID
+    if factionBankID then
+        canView = false
+        if (isAdmin() or isCoopHost() or getDebug()) then canView = true end
+    end
+
+    return canView
 end

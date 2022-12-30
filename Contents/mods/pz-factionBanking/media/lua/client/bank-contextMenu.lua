@@ -1,4 +1,5 @@
 require "bank-window"
+require "shop-contextMenu"
 
 local CONTEXT_HANDLER = {}
 

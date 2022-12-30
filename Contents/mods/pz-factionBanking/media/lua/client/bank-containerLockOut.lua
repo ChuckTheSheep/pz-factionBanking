@@ -1,103 +1,21 @@
 require "ISUI/ISInventoryPane"
 require "ISUI/ISInventoryPage"
 
-local function validBankObject(mapObject)
-    local canView = true
-    if mapObject then
-        local factionBankID = mapObject and mapObject:getModData().factionBankID
-        if factionBankID then
-            canView = false
-            if (isAdmin() or isCoopHost() or getDebug()) then canView = true end
-        end
+local containerLockOut = require "shop-containerLockOut"
+
+local containerLockOut_canInteract = containerLockOut.canInteract
+function containerLockOut.canInteract(mapObject)
+
+    local canViewBefore = containerLockOut_canInteract(mapObject)
+    local canView = canViewBefore
+
+    if not mapObject then return canViewBefore end
+
+    local factionBankID = mapObject and mapObject:getModData().factionBankID
+    if factionBankID then
+        canView = false
+        if (isAdmin() or isCoopHost() or getDebug()) then canView = true end
     end
-    return canView
+
+    return (canViewBefore and canView)
 end
-
-
-local ISInventoryTransferAction_isValid = ISInventoryTransferAction.isValid
-function ISInventoryTransferAction:isValid()
-    if self.destContainer and self.srcContainer then
-        if validBankObject(self.destContainer:getParent()) and validBankObject(self.srcContainer:getParent()) then
-            return ISInventoryTransferAction_isValid(self)
-        end
-    end
-end
-
-
-local ISInventoryPage_dropItemsInContainer = ISInventoryPage.dropItemsInContainer
-function ISInventoryPage:dropItemsInContainer(button)
-    local container = self.mouseOverButton and self.mouseOverButton.inventory or nil
-    local allow = true
-
-    if container then
-        local mapObj = container:getParent()
-        if mapObj then
-            local factionBankID = mapObj:getModData().factionBankID
-            if factionBankID then allow = validBankObject(mapObj) end
-        end
-    end
-    if allow then ISInventoryPage_dropItemsInContainer(self, button)
-    else
-        if ISMouseDrag.draggingFocus then
-            ISMouseDrag.draggingFocus:onMouseUp(0,0)
-            ISMouseDrag.draggingFocus = nil
-            ISMouseDrag.dragging = nil
-        end
-        self:refreshWeight()
-        return true
-    end
-end
-
-
-local ISInventoryPage_update = ISInventoryPage.update
-function ISInventoryPage:update()
-    ISInventoryPage_update(self)
-    if not self.onCharacter then
-        -- If the currently-selected container is locked to the player, select another container.
-        local object = self.inventory and self.inventory:getParent() or nil
-        if object and #self.backpacks > 1 and instanceof(object, "IsoThumpable") and (not validBankObject(object)) then
-            local currentIndex = self:getCurrentBackpackIndex()
-            local unlockedIndex = self:prevUnlockedContainer(currentIndex, false)
-            if unlockedIndex == -1 then
-                unlockedIndex = self:nextUnlockedContainer(currentIndex, false)
-            end
-            if unlockedIndex ~= -1 then
-                local playerObj = getSpecificPlayer(self.player)
-                if playerObj:getJoypadBind() ~= -1 then
-                    self.backpackChoice = unlockedIndex
-                end
-                self:selectContainer(self.backpacks[unlockedIndex])
-            end
-        end
-    end
-end
-
-
-local function containerLockOut(UI, STEP)
-    if STEP == "buttonsAdded" then
-        local firstOpen
-        for index,containerButton in ipairs(UI.backpacks) do
-            local mapObj = containerButton.inventory:getParent()
-            if mapObj then
-
-                local canView = validBankObject(mapObj)
-
-                if not canView then
-                    if containerButton then
-                        containerButton.onclick = nil
-                        containerButton.onmousedown = nil
-                        containerButton.onMouseUp = nil
-                        containerButton.onRightMouseDown = nil
-                        containerButton:setOnMouseOverFunction(nil)
-                        containerButton:setOnMouseOutFunction(nil)
-                        containerButton.textureOverride = getTexture("media/ui/lock.png")
-                    end
-                else
-                    firstOpen = firstOpen or index
-                end
-            end
-        end
-        UI.inventoryPane.inventory = UI.backpacks[firstOpen or #UI.backpacks].inventory
-    end
-end
-Events.OnRefreshInventoryWindowContainers.Add(containerLockOut)
