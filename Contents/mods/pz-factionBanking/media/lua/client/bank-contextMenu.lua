@@ -3,11 +3,11 @@ require "shop-contextMenu"
 
 local CONTEXT_HANDLER = {}
 
----@param mapObject MapObjects|IsoObject
-function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, mapObject, factionID)
+---@param worldObject IsoObject
+function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, worldObject, factionID)
     if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
-    mapObject:getModData().factionBankID = mapObject:getModData().factionBankID or true
-    bankWindow:onBrowse(factionID or true, mapObject)
+    worldObject:getModData().factionBankID = worldObject:getModData().factionBankID or true
+    bankWindow:onBrowse(factionID or true, worldObject)
 end
 
 
@@ -26,7 +26,7 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
     triggerEvent("BANKING_ClientModDataReady")
 
     for i=0,square:getObjects():size()-1 do
-        ---@type IsoObject|MapObjects
+        ---@type IsoObject
         local object = square:getObjects():get(i)
         if object and (not instanceof(object, "IsoWorldInventoryObject")) then
             local factionID = object:getModData().factionBankID
@@ -53,13 +53,13 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
             currentMenu = subMenu
         end
 
-        for mapObject,factionID in pairs(validObjects) do
-            local objectName = _internal.getMapObjectDisplayName(mapObject)
+        for worldObject,factionID in pairs(validObjects) do
+            local objectName = _internal.getWorldObjectDisplayName(worldObject)
             if objectName then
                 local contextText = objectName.." [ "..getText("ContextMenu_ASSIGN_BANK").." ]"
                 if factionID==true then factionID = getText("IGUI_PUBLIC") end
                 if factionID then contextText = getText("ContextMenu_BANK_AT").." "..(factionID.." "..getText("IGUI_BANK") or objectName) end
-                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, mapObject, factionID)
+                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, worldObject, factionID)
             end
         end
     end

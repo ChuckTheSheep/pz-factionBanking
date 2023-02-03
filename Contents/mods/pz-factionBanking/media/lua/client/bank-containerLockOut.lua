@@ -4,14 +4,14 @@ require "ISUI/ISInventoryPage"
 local containerLockOut = require "shop-containerLockOut"
 
 local containerLockOut_canInteract = containerLockOut.canInteract
-function containerLockOut.canInteract(mapObject)
+function containerLockOut.canInteract(worldObject)
 
-    local canViewBefore = containerLockOut_canInteract(mapObject)
+    local canViewBefore = containerLockOut_canInteract(worldObject)
     local canView = canViewBefore
 
-    if not mapObject then return canViewBefore end
+    if not worldObject then return canViewBefore end
 
-    local factionBankID = mapObject and mapObject:getModData().factionBankID
+    local factionBankID = worldObject and worldObject:getModData().factionBankID
     if factionBankID then
         canView = false
         if (isAdmin() or isCoopHost() or getDebug()) then canView = true end

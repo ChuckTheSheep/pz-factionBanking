@@ -14,7 +14,7 @@ local function onClientCommand(_module, _command, _player, _data)
 
     if _command == "removeBank" then
 
-        local x, y, z, mapObjName = _data.x, _data.y, _data.z, _data.mapObjName
+        local x, y, z, worldObjName = _data.x, _data.y, _data.z, _data.worldObjName
         local sq = getSquare(x, y, z)
         if not sq then print("ERROR: Could not find square for assigning bank.") return end
 
@@ -23,13 +23,13 @@ local function onClientCommand(_module, _command, _player, _data)
 
         local foundObjToApplyTo
         for i=0,objects:size()-1 do
-            ---@type IsoObject|MapObjects
+            ---@type IsoObject
             local object = objects:get(i)
-            if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getMapObjectName(object)==mapObjName then
+            if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getWorldObjectName(object)==worldObjName then
                 foundObjToApplyTo = object
             end
         end
-        if not foundObjToApplyTo then print("ERROR: removeBank: No foundObjToApplyTo : "..mapObjName) return end
+        if not foundObjToApplyTo then print("ERROR: removeBank: No foundObjToApplyTo : "..worldObjName) return end
 
         foundObjToApplyTo:getModData().factionBankID = nil
         foundObjToApplyTo:transmitModData()
@@ -38,7 +38,7 @@ local function onClientCommand(_module, _command, _player, _data)
 
     if _command == "assignBank" then
 
-        local bankID, x, y, z, mapObjName = _data.bankID, _data.x, _data.y, _data.z, _data.mapObjName
+        local bankID, x, y, z, worldObjName = _data.bankID, _data.x, _data.y, _data.z, _data.worldObjName
         local sq = getSquare(x, y, z)
         if not sq then print("ERROR: Could not find square for assigning bank.") return end
 
@@ -48,9 +48,9 @@ local function onClientCommand(_module, _command, _player, _data)
         local foundObjToApplyTo
 
         for i=0,objects:size()-1 do
-            ---@type IsoObject|MapObjects
+            ---@type IsoObject
             local object = objects:get(i)
-            if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getMapObjectName(object)==mapObjName then
+            if object and (not instanceof(object, "IsoWorldInventoryObject")) and _internal.getWorldObjectName(object)==worldObjName then
 
                 local accObj = GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID]
                 local objMD = object:getModData()
@@ -63,7 +63,7 @@ local function onClientCommand(_module, _command, _player, _data)
             end
         end
 
-        if not foundObjToApplyTo then print("ERROR: assignBank: No foundObjToApplyTo : "..mapObjName) return end
+        if not foundObjToApplyTo then print("ERROR: assignBank: No foundObjToApplyTo : "..worldObjName) return end
         ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
         foundObjToApplyTo:getModData().factionBankID = bankID
         foundObjToApplyTo:transmitModData()

@@ -139,8 +139,8 @@ function bankWindow:populateComboList()
             local factionName = faction:getName()
             if faction then
                 self.selectFaction:addOption(factionName)
-                if self.mapObject then
-                    local bankID = self.mapObject:getModData().factionBankID
+                if self.worldObject then
+                    local bankID = self.worldObject:getModData().factionBankID
                     if bankID and bankID==factionName then self.selectFaction:select(bankID) end
                 end
             end
@@ -152,7 +152,7 @@ end
 
 
 function bankWindow:update()
-    if not self.player or not self.mapObject or (math.abs(self.player:getX()-self.mapObject:getX())>2) or (math.abs(self.player:getY()-self.mapObject:getY())>2) then
+    if not self.player or not self.worldObject or (math.abs(self.player:getX()-self.worldObject:getX())>2) or (math.abs(self.player:getY()-self.worldObject:getY())>2) then
         self:setVisible(false)
         self:removeFromUIManager()
         return
@@ -173,8 +173,8 @@ function bankWindow:render()
     local managed = (isAdmin() or isCoopHost() or getDebug())
     local blocked = true
 
-    local mapObjModData = (self.mapObject and self.mapObject:getModData())
-    local bankingFactionID = (mapObjModData.factionBankID ~= true and mapObjModData.factionBankID) or (playerFaction and playerFaction:getName())
+    local worldObjModData = (self.worldObject and self.worldObject:getModData())
+    local bankingFactionID = (worldObjModData.factionBankID ~= true and worldObjModData.factionBankID) or (playerFaction and playerFaction:getName())
     self.currentAccount = bankingFactionID and CLIENT_BANK_ACCOUNTS[bankingFactionID]
 
     if not managed then
@@ -242,17 +242,17 @@ function bankWindow:render()
     if self.selectFaction.selected~=1 and self.selectFaction.selected ~= self.selectFaction.lastSelected then
         self.selectFaction.lastSelected = self.selectFaction.selected
 
-        local x, y, z, mapObjName = self.mapObject:getX(), self.mapObject:getY(), self.mapObject:getZ(), _internal.getMapObjectName(self.mapObject)
+        local x, y, z, worldObjName = self.worldObject:getX(), self.worldObject:getY(), self.worldObject:getZ(), _internal.getWorldObjectName(self.worldObject)
 
         if self.selectFaction.selected == #self.selectFaction.options then
-            sendClientCommand("bank", "removeBank", { x=x, y=y, z=z, mapObjName=mapObjName })
+            sendClientCommand("bank", "removeBank", { x=x, y=y, z=z, worldObjName=worldObjName })
             self:setVisible(false)
             self:removeFromUIManager()
         end
 
         local factionSelectedName = self.selectFaction:getSelectedText()
         if Faction.factionExist(factionSelectedName) then
-            sendClientCommand("bank", "assignBank", { bankID=factionSelectedName, x=x, y=y, z=z, mapObjName=mapObjName })
+            sendClientCommand("bank", "assignBank", { bankID=factionSelectedName, x=x, y=y, z=z, worldObjName=worldObjName })
         end
     end
 end
@@ -260,7 +260,7 @@ end
 
 function bankWindow:onClick(button)
 
-    local x, y, z, mapObjName = self.mapObject:getX(), self.mapObject:getY(), self.mapObject:getZ(), _internal.getMapObjectName(self.mapObject)
+    local x, y, z, worldObjName = self.worldObject:getX(), self.worldObject:getY(), self.worldObject:getZ(), _internal.getWorldObjectName(self.worldObject)
 
     if button.internal == "CANCEL" then
         self:setVisible(false)
@@ -298,7 +298,7 @@ end
 function bankWindow:RestoreLayout(name, layout) ISLayoutManager.DefaultRestoreWindow(self, layout) end
 function bankWindow:SaveLayout(name, layout) ISLayoutManager.DefaultSaveWindow(self, layout) end
 
-function bankWindow:new(x, y, width, height, player, factionID, mapObj)
+function bankWindow:new(x, y, width, height, player, factionID, worldObj)
     local o = {}
     x = getCore():getScreenWidth() / 2 - (width / 2)
     y = getCore():getScreenHeight() / 2 - (height / 2)
@@ -312,7 +312,7 @@ function bankWindow:new(x, y, width, height, player, factionID, mapObj)
     o.width = width
     o.height = height
     o.player = player
-    o.mapObject = mapObj
+    o.worldObject = worldObj
     o.factionID = factionID
     o.moveWithMouse = true
     bankWindow.instance = o
@@ -320,7 +320,7 @@ function bankWindow:new(x, y, width, height, player, factionID, mapObj)
 end
 
 
-function bankWindow:onBrowse(factionID, mapObj)
+function bankWindow:onBrowse(factionID, worldObj)
     if bankWindow.instance and bankWindow.instance:isVisible() then
         bankWindow.instance:setVisible(false)
         bankWindow.instance:removeFromUIManager()
@@ -328,7 +328,7 @@ function bankWindow:onBrowse(factionID, mapObj)
 
     triggerEvent("BANKING_ClientModDataReady")
 
-    local ui = bankWindow:new(50,50,250,200, getPlayer(), factionID, mapObj)
+    local ui = bankWindow:new(50,50,250,200, getPlayer(), factionID, worldObj)
     ui:initialise()
     ui:addToUIManager()
 end

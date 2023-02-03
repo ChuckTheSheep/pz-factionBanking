@@ -1,13 +1,13 @@
 local clickHandler = require "shop-ISObjectClickHandler"
 
 local clickHandler_canInteract = clickHandler.canInteract
-function clickHandler.canInteract(mapObject)
+function clickHandler.canInteract(worldObject)
 
-    local canView = clickHandler_canInteract(mapObject)
+    local canView = clickHandler_canInteract(worldObject)
 
-    if not mapObject then return canView end
+    if not worldObject then return canView end
 
-    local factionBankID = mapObject and mapObject:getModData().factionBankID
+    local factionBankID = worldObject and worldObject:getModData().factionBankID
     if factionBankID then
         canView = false
         if (isAdmin() or isCoopHost() or getDebug()) then canView = true end
