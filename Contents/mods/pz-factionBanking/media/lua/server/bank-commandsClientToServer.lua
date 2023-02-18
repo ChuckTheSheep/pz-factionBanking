@@ -7,9 +7,9 @@ local function onClientCommand(_module, _command, _player, _data)
     _data = _data or {}
 
     if _command == "transferFunds" then
-        local transferValue, factionID = _data.transferValue, _data.factionID
-        local playerObj, playerID, playerUsername = _data.playerObj, _data.playerID, _data.playerUsername
-        ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,transferValue,factionID)
+        local transferValue, factionID, directDeposit = _data.transferValue, _data.factionID, _data.directDeposit
+        local playerID, playerUsername = _data.playerID, _data.playerUsername
+        ACCOUNTS_HANDLER.validateRequest(_player,playerID,playerUsername,transferValue,factionID,directDeposit)
     end
 
     if _command == "removeBank" then

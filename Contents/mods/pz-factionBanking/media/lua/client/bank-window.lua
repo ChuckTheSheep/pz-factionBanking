@@ -1,6 +1,7 @@
 require "ISUI/ISPanelJoypad"
 require "bank-globalModDataClient"
 require "luautils"
+require "shop-wallet"
 
 ---@class bankWindow : ISPanel
 bankWindow = ISPanelJoypad:derive("bankWindow")
@@ -27,7 +28,15 @@ function bankWindow:initialise()
 
     local yOffset = self.selectFaction.y+self.selectFaction.height+15
 
+    self.depositTray = ISButton:new(pad, yOffset, 32, 32, "", self)
+    self.depositTray.borderColor = { r = 1, g = 1, b = 1, a = 0.7 }
+    self.depositTray.onMouseUp = self.depositTrayOnMouseUp
+    self.depositTray:initialise()
+    self.depositTray:instantiate()
+    self:addChild(self.depositTray)
+
     local buttonW = btnWid/1.7
+    yOffset = yOffset+self.depositTray.height+pad
     self.transferProceed = ISButton:new(self.width-buttonW-pad, yOffset, buttonW, btnHgt-4, getText("IGUI_CONFIRM"), self, bankWindow.onClick)
     self.transferProceed.internal = "CONFIRM"
     self.transferProceed.borderColor = {r=1, g=1, b=1, a=0.4}
@@ -64,6 +73,41 @@ function bankWindow:initialise()
     self:addChild(self.no)
 
     self.fresh = true
+end
+
+
+function bankWindow:depositTrayMoney(moneyItem)
+    local playerModData = self.player:getModData()
+    if not playerModData then print("WARN: Player without modData.") return end
+    local walletID = playerModData.wallet_UUID
+    if not walletID then print("- No Player wallet_UUID.") return end
+
+    local pUsername = self.player:getUsername()
+    local faction = Faction.getPlayerFaction(self.player)
+    if not faction then print("ERROR: No player faction for: "..pUsername) return end
+    local value = moneyItem:getModData().value
+    sendClientCommand("bank", "transferFunds", {playerID=walletID, directDeposit=true, playerUsername=pUsername, transferValue=value, factionID=faction:getName()})
+    safelyRemoveMoney(moneyItem)
+end
+
+function bankWindow:depositTrayOnMouseUp(x, y)
+    if self.vscroll then self.vscroll.scrolling = false end
+    local counta = 1
+    if ISMouseDrag.dragging then
+        for i,v in ipairs(ISMouseDrag.dragging) do
+            counta = 1
+            if instanceof(v, "InventoryItem") and _internal.isMoneyType(v:getFullType()) then self.parent:depositTrayMoney(v)
+            else
+                if v.invPanel.collapsed[v.name] then
+                    counta = 1
+                    for i2,v2 in ipairs(v.items) do
+                        if counta > 1 and _internal.isMoneyType(v2:getFullType()) then self.parent:depositTrayMoney(v2) end
+                        counta = counta + 1
+                    end
+                end
+            end
+        end
+    end
 end
 
 
@@ -205,9 +249,13 @@ function bankWindow:render()
         local pad = 10
         local textY = self.no.y-(fontH*2)-(pad*2)
 
-        local walletBalText = getText("IGUI_WALLETBALANCE")
-        walletBalText = walletBalText..":\n".._internal.numToCurrency(currentWalletBalance)
-        self:drawText(walletBalText, pad*1.5, textY, 1,1,1,0.7, UIFont.Small)
+        self:drawText(getText("IGUI_DRAGCASHHERE"), pad*1.5, textY, 1,1,1,0.7, UIFont.Small)
+
+        if SandboxVars.ShopsAndTraders.PlayerWallets then
+            local walletBalText = getText("IGUI_WALLETBALANCE")
+            walletBalText = walletBalText..":\n".._internal.numToCurrency(currentWalletBalance)
+            self:drawText(walletBalText, pad*1.5, textY, 1,1,1,0.7, UIFont.Small)
+        end
 
         local bankBalText = getText("IGUI_ACCOUNTBALANCE")
         bankBalText = bankBalText..":\n".._internal.numToCurrency(currentBankBalance)
@@ -271,7 +319,6 @@ function bankWindow:onClick(button)
         local value = self.withdrawSlider:getCurrentValue()
         if value then
 
-            --if not SandboxVars.ShopsAndTraders.PlayerWallets then return end
             local playerModData = self.player:getModData()
             if not playerModData then print("WARN: Player without modData.") return end
             local walletID = playerModData.wallet_UUID
@@ -284,6 +331,7 @@ function bankWindow:onClick(button)
             if not faction then print("ERROR: No player faction for: "..pUsername)  return end
 
             if value > currentBankBalance then --deposit
+                if not SandboxVars.ShopsAndTraders.PlayerWallets then return end
                 value = _internal.floorCurrency(value-currentBankBalance)
                 sendClientCommand("bank", "transferFunds", {playerID=walletID, playerUsername=pUsername, transferValue=value, factionID=faction:getName()})
             elseif value < currentBankBalance then --withdraw
@@ -328,7 +376,7 @@ function bankWindow:onBrowse(factionID, worldObj)
 
     triggerEvent("BANKING_ClientModDataReady")
 
-    local ui = bankWindow:new(50,50,250,200, getPlayer(), factionID, worldObj)
+    local ui = bankWindow:new(50,50,250,250, getPlayer(), factionID, worldObj)
     ui:initialise()
     ui:addToUIManager()
 end

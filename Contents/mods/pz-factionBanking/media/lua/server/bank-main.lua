@@ -63,7 +63,7 @@ function ACCOUNTS_HANDLER.getOrSetFactionAccount(faction)
 end
 
 ---@param playerObj IsoPlayer|IsoGameCharacter|IsoMovingObject|IsoObject
-function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requestAmount,factionID)
+function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requestAmount,factionID,directDeposit)
 
     local playerWallet = WALLET_HANDLER.getOrSetPlayerWallet(playerID)
     if not playerWallet then print("ERROR: ACCOUNTS_HANDLER.validateRequest: No valid player wallet") return end
@@ -75,7 +75,11 @@ function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requ
     if requestAmount ~= 0 then
         --deposits = negative, withdraws = positive
         factionAccount.amount = _internal.floorCurrency(factionAccount.amount+requestAmount)
-        WALLET_HANDLER.validateMoneyOrWallet(playerWallet,playerObj,0-requestAmount)
+
+        if (not directDeposit or requestAmount<0) then
+            WALLET_HANDLER.validateMoneyOrWallet(playerWallet,playerObj,0-requestAmount)
+        end
+
         local balanceBefore = (account.usedByHistory[playerID] and account.usedByHistory[playerID].balance) or 0
         account.usedByHistory[playerID] = {username=playerUsername,balance=balanceBefore+requestAmount}
         triggerEvent("SHOPPING_ServerModDataReady")
