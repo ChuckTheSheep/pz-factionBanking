@@ -240,6 +240,7 @@ function bankWindow:render()
     self.transferProceed:setVisible(not blocked)
     self.transferEntry:setVisible(not blocked)
     self.withdrawSlider:setVisible(not blocked)
+    self.depositTray:setVisible(not blocked)
 
     local currentWalletBalance, currentBankBalance = (getWalletBalance(self.player) or 0), (self.currentAccount and self.currentAccount.amount) or 0
 
@@ -249,7 +250,7 @@ function bankWindow:render()
         local pad = 10
         local textY = self.no.y-(fontH*2)-(pad*2)
 
-        self:drawText(getText("IGUI_DRAGCASHHERE"), pad*1.5, textY, 1,1,1,0.7, UIFont.Small)
+        self:drawText(getText("IGUI_DRAGCASHHERE"), self.depositTray:getWidth()+(pad*1.5), self.depositTray:getY(), 1,1,1,0.3, UIFont.Small)
 
         if SandboxVars.ShopsAndTraders.PlayerWallets then
             local walletBalText = getText("IGUI_WALLETBALANCE")
