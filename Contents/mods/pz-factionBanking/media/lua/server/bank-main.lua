@@ -86,3 +86,37 @@ function ACCOUNTS_HANDLER.validateRequest(playerObj,playerID,playerUsername,requ
         triggerEvent("BANKING_ServerModDataReady")
     end
 end
+
+
+function ACCOUNTS_HANDLER.accrueInterest()
+
+    local gameTime = getGameTime()
+    local gtNightsSurvived = gameTime:getNightsSurvived()
+
+    local intervals = math.floor(gtNightsSurvived/SandboxVars.FactionBanking.InterestEarnDuration)
+
+    local gtMD = gameTime:getModData()
+    local storedIntervals = gtMD.storedIntervals or 0
+
+    if intervals>0 and intervals > storedIntervals then
+        storedIntervals = intervals
+
+        for factionName,accountActual in pairs(GLOBAL_BANK_ACCOUNTS) do
+            if accountActual then
+                local factionActual = Faction.getFaction(factionName)
+                if factionActual then
+
+                    if account.owner ~= factionActual:getOwner() then
+                        accountActual.dead = true
+                        accountActual.faction = accountActual.faction.."\[DEAD\]"
+                    else
+                        if accountActual.amount > SandboxVars.FactionBanking.MinimumBalanceForInterest then
+                            accountActual.amount = accountActual.amount + (accountActual.amount*SandboxVars.FactionBanking.InterestRates)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+Events.EveryDays.Add(ACCOUNTS_HANDLER.accrueInterest)
