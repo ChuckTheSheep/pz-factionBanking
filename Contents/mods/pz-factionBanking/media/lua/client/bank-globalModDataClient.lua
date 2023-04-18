@@ -1,7 +1,7 @@
 ---Credit to Konijima (Konijima#9279) for clearing up networking :thumbsup:
 require "bank-commandsServerToClient"
 require "shop-globalModDataClient"
-require "shop-shared"
+local _internal = require "shop-shared"
 
 CLIENT_BANK_ACCOUNTS = {}
 
