@@ -1,3 +1,4 @@
+require "shop-commandsServerToClient"
 local _internal = require "shop-shared"
 
 LuaEventManager.AddEvent("BANKING_ClientModDataReady")
