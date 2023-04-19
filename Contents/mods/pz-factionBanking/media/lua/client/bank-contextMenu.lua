@@ -1,5 +1,6 @@
 require "bank-window"
 require "shop-contextMenu"
+local _internal = require "shop-shared"
 
 local CONTEXT_HANDLER = {}
 
