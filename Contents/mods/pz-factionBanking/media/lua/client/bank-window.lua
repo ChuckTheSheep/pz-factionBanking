@@ -2,6 +2,7 @@ require "ISUI/ISPanelJoypad"
 require "bank-globalModDataClient"
 require "luautils"
 require "shop-wallet"
+local _internal = require "shop-shared"
 
 ---@class bankWindow : ISPanel
 bankWindow = ISPanelJoypad:derive("bankWindow")
@@ -145,7 +146,9 @@ end
 
 function bankWindow:setTransferAmount(val)
 
-    local walletBalance = getWalletBalance(self.player) or 0
+    local wallet, walletBalance = getWallet(self.player), 0
+    if wallet then walletBalance = wallet.amount end
+
     local bankBalance = (self.currentAccount and self.currentAccount.amount) or 0
 
     if self.withdrawSlider and not self.transferEntry:isFocused() then
@@ -242,7 +245,10 @@ function bankWindow:render()
     self.withdrawSlider:setVisible(not blocked)
     self.depositTray:setVisible(not blocked)
 
-    local currentWalletBalance, currentBankBalance = (getWalletBalance(self.player) or 0), (self.currentAccount and self.currentAccount.amount) or 0
+    local wallet, currentWalletBalance = getWallet(self.player), 0
+    if wallet then currentWalletBalance = wallet.amount end
+
+    local currentBankBalance = (self.currentAccount and self.currentAccount.amount) or 0
 
     if blocked then
         self.blocker:drawText(blockingMessage, self.width/2-(getTextManager():MeasureStringX(UIFont.Small, blockingMessage)/2), (self.height/2)-fontH, 1,1,1,1, UIFont.Small)
