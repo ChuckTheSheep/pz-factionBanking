@@ -1,10 +1,11 @@
 version=1
 id=2906926438
 title=Shops and Traders: Faction Banking
-description=[img]https://i.imgur.com/p7Fv1Z6.gif[/img]
+description=[h3]Complementary mod to Shops and Traders, allows for factions to bank their money together.[/h3]
 description=
-description=[url=https://ko-fi.com/chuckleberryfinn][img]https://i.imgur.com/GxZ38nz.png[/img] [b]Consider supporting Chuck![/b][/url] [url=https://www.patreon.com/bePatron?u=17239488][img]https://raw.githubusercontent.com/ChuckTheSheep/Vanilla-Weapons-Expanded/main/Contents/mods/VanillaWeaponsExpanded/patreon/Patreon%20Logo.png[/img][/url]
+description=[url=https://ko-fi.com/chuckleberryfinn][img]https://raw.githubusercontent.com/ChuckTheSheep/chuckImages/main/kofi.png[/img][/url] [url=https://www.patreon.com/bePatron?u=17239488][img]https://raw.githubusercontent.com/ChuckTheSheep/chuckImages/main/patreon.png[/img][/url]
 description=
-description=Complementary mod to Shops and Traders, allows for factions to bank their money together.
+description=
+description=[h3]Copyright 2023 Chuckleberry Finn. This item is not authorized for posting on Steam, except under the Steam account named Chuckleberry Finn.[/h3]
 tags=Build 41;Framework;Misc;Multiplayer
 visibility=unlisted
