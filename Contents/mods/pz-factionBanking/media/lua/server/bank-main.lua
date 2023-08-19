@@ -1,7 +1,8 @@
 require "bank-globalModDataServer"
 require "shop-commandsClientToServer"
-require "bank-shared"
 require "shop-main"
+
+local _internal = require "shop-shared"
 
 ACCOUNTS_HANDLER = {}
 ---@class account Pseudo-Object
