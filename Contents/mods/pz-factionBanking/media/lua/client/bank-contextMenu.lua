@@ -5,8 +5,11 @@ local _internal = require "shop-shared"
 local CONTEXT_HANDLER = {}
 
 ---@param worldObject IsoObject
+---@param playerObj IsoPlayer|IsoGameCharacter
 function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, worldObject, factionID)
-    if not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
+    --local playerFaction = Faction.getPlayerFaction(playerObj)
+    --local bankFaction = Faction.getFaction(factionID)
+    --if not playerFaction or not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
     worldObject:getModData().factionBankID = worldObject:getModData().factionBankID or true
     bankWindow:onBrowse(factionID or true, worldObject)
 end
@@ -26,6 +29,9 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
 
     triggerEvent("BANKING_ClientModDataReady")
 
+    local playerIsFactionOwner = Faction.getPlayerFaction(playerObj)
+    if playerIsFactionOwner then playerIsFactionOwner = playerIsFactionOwner:getOwner()==playerObj:getUsername() end
+
     for i=0,square:getObjects():size()-1 do
         ---@type IsoObject
         local object = square:getObjects():get(i)
@@ -38,7 +44,7 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
                 factionID = nil
             end
 
-            if factionID or (isAdmin() or isCoopHost() or getDebug()) then
+            if factionID or playerIsFactionOwner or (isAdmin() or isCoopHost() or getDebug()) then
                 validObjects[object] = factionID or false
                 validObjectCount = validObjectCount+1
             end
