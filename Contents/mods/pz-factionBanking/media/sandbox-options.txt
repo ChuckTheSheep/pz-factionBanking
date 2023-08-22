@@ -8,3 +8,9 @@ option FactionBanking.InterestRates
 
 option FactionBanking.InterestEarnDuration
 {type = integer, min = 1, max = 366, default = 7, page = FactionBanking, translation = FactionBanking_InterestEarnDuration,}
+
+option FactionBanking.OwnersCanSetBanks
+{type = boolean, default = false, page = FactionBanking, translation = FactionBanking_OwnersCanSetBanks,}
+
+option FactionBanking.MaxNumberOfBanksPerFaction
+{type = integer, min = 1, max = 10, default = 1, page = FactionBanking, translation = FactionBanking_MaxNumberOfBanksPerFaction,}

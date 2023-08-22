@@ -10,7 +10,7 @@ function CONTEXT_HANDLER.browseBank(worldObjects, playerObj, worldObject, factio
     --local playerFaction = Faction.getPlayerFaction(playerObj)
     --local bankFaction = Faction.getFaction(factionID)
     --if not playerFaction or not (isAdmin() or isCoopHost() or getDebug()) then print(" ERROR: non-admin accessed context menu meant for assigning banks.") return end
-    worldObject:getModData().factionBankID = worldObject:getModData().factionBankID or true
+    worldObject:getModData().factionBankID = worldObject:getModData().factionBankID or factionID or true
     bankWindow:onBrowse(factionID or true, worldObject)
 end
 
@@ -29,8 +29,19 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
 
     triggerEvent("BANKING_ClientModDataReady")
 
-    local playerIsFactionOwner = Faction.getPlayerFaction(playerObj)
-    if playerIsFactionOwner then playerIsFactionOwner = playerIsFactionOwner:getOwner()==playerObj:getUsername() end
+    local playerFaction = Faction.getPlayerFaction(playerObj)
+    local playerIsFactionOwner = playerFaction and playerFaction:getOwner()==playerObj:getUsername() or false
+    if SandboxVars.FactionBanking.OwnersCanSetBanks ~= true then playerIsFactionOwner = false end
+
+    local tooManyBanks = false
+    local maxLocations = SandboxVars.FactionBanking.MaxNumberOfBanksPerFaction or 1
+
+    local previousAccObj = CLIENT_BANK_ACCOUNTS[playerFaction:getName()]
+    if previousAccObj then
+        previousAccObj.banksLocations = previousAccObj.banksLocations or 0
+        tooManyBanks = maxLocations <= previousAccObj.banksLocations
+    end
+    if (isAdmin() or isCoopHost() or getDebug()) then tooManyBanks = false end
 
     for i=0,square:getObjects():size()-1 do
         ---@type IsoObject
@@ -39,8 +50,8 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
             local factionID = object:getModData().factionBankID
 
             if factionID and factionID~=true and not Faction.factionExist(factionID) then
-                object:getModData().factionBankID = nil
-                object:transmitModData()
+                local x, y, z, worldObjName = object:getX(), object:getY(), object:getZ(), _internal.getWorldObjectName(object)
+                sendClientCommand("bank", "removeBank", { x=x, y=y, z=z, worldObjName=worldObjName })
                 factionID = nil
             end
 
@@ -51,6 +62,8 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
         end
     end
 
+
+    ---@type ISContextMenu
     local currentMenu = context
     if validObjectCount > 0 then
         if validObjectCount>1 then
@@ -66,7 +79,14 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
                 local contextText = objectName.." [ "..getText("ContextMenu_ASSIGN_BANK").." ]"
                 if factionID==true then factionID = getText("IGUI_PUBLIC") end
                 if factionID then contextText = getText("ContextMenu_BANK_AT").." "..(factionID.." "..getText("IGUI_BANK") or objectName) end
-                currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, worldObject, factionID)
+
+                local option = currentMenu:addOptionOnTop(contextText, worldObjects, CONTEXT_HANDLER.browseBank, playerObj, worldObject, factionID)
+                if tooManyBanks and not factionID then
+                    option.notAvailable = true
+                    local tooltip = ISWorldObjectContextMenu.addToolTip()
+                    tooltip.description = getText("IGUI_TOO_MANY_BANKS", maxLocations)
+                    option.tooltip = tooltip
+                end
             end
         end
     end

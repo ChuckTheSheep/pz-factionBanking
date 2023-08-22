@@ -9,4 +9,10 @@ Sandbox_EN = {
 
     Sandbox_FactionBanking_InterestEarnDuration = "Hours Between Interest Earnings",
     Sandbox_FactionBanking_InterestEarnDuration_tooltip = "How many in-game hours between when interest is earned.",
+
+    Sandbox_FactionBanking_OwnersCanSetBanks = "Faction Owners Can Set Banks",
+    Sandbox_FactionBanking_OwnersCanSetBanks_tooltip = "Can faction owners set banks, not false only admins can.",
+
+    Sandbox_FactionBanking_MaxNumberOfBanksPerFaction = "Max Number Of Banks Per Faction",
+
 }

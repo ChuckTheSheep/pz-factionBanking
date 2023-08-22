@@ -12,6 +12,7 @@ account.owner = false
 account.amount = 0
 account.usedByHistory = {} --[PID] = {username=false,balance=0}
 account.dead = false
+account.banksLocations = 0
 
 ---Faction.getPlayerFaction(getPlayer())
 ---Faction.getFaction(string)
@@ -23,6 +24,7 @@ function ACCOUNTS_HANDLER.new(faction)
     local newAccount = copyTable(account)
     newAccount.faction = faction
     GLOBAL_BANK_ACCOUNTS[newAccount.faction] = newAccount
+    return GLOBAL_BANK_ACCOUNTS[newAccount.faction]
 end
 
 function ACCOUNTS_HANDLER.parseDeadAccounts(playerObj,playerID)

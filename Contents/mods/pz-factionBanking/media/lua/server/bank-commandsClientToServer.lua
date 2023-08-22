@@ -32,6 +32,10 @@ local function onClientCommand(_module, _command, _player, _data)
         end
         if not foundObjToApplyTo then print("ERROR: removeBank: No foundObjToApplyTo : "..worldObjName) return end
 
+        local bankID = foundObjToApplyTo:getModData().factionBankID
+        local previousAccObj = ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
+        if previousAccObj then previousAccObj.banksLocations = (previousAccObj.banksLocations or 1)-1 end
+
         foundObjToApplyTo:getModData().factionBankID = nil
         foundObjToApplyTo:transmitModData()
         triggerEvent("BANKING_ServerModDataReady")
@@ -56,6 +60,7 @@ local function onClientCommand(_module, _command, _player, _data)
                 local accObj = GLOBAL_BANK_ACCOUNTS[object:getModData().factionBankID]
                 local objMD = object:getModData()
                 if objMD and objMD.factionBankID and (not accObj or (accObj and accObj.dead)) then
+                    if accObj then accObj.banksLocations = (accObj.banksLocations or 1)-1 end
                     objMD.factionBankID = nil
                     object:transmitModData()
                 end
@@ -65,7 +70,12 @@ local function onClientCommand(_module, _command, _player, _data)
         end
 
         if not foundObjToApplyTo then print("ERROR: assignBank: No foundObjToApplyTo : "..worldObjName) return end
-        ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
+
+        if bankID and bankID~=true then
+            local account = ACCOUNTS_HANDLER.getOrSetFactionAccount(bankID)
+            account.banksLocations = (account.banksLocations or 0)+1
+        end
+
         foundObjToApplyTo:getModData().factionBankID = bankID
         foundObjToApplyTo:transmitModData()
         triggerEvent("BANKING_ServerModDataReady")

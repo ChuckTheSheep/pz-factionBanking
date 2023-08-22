@@ -221,7 +221,8 @@ function bankWindow:render()
     local blocked = true
 
     local worldObjModData = (self.worldObject and self.worldObject:getModData())
-    local bankingFactionID = (worldObjModData.factionBankID ~= true and worldObjModData.factionBankID) or (playerFaction and playerFaction:getName())
+    local worldObjectBankID = worldObjModData.factionBankID
+    local bankingFactionID = (worldObjectBankID ~= true and worldObjModData.factionBankID) or (playerFaction and playerFaction:getName())
     self.currentAccount = bankingFactionID and CLIENT_BANK_ACCOUNTS[bankingFactionID]
 
     if not managed then
@@ -306,7 +307,7 @@ function bankWindow:render()
         end
 
         local factionSelectedName = self.selectFaction:getSelectedText()
-        if Faction.factionExist(factionSelectedName) then
+        if Faction.factionExist(factionSelectedName) and worldObjectBankID~=factionSelectedName then
             sendClientCommand("bank", "assignBank", { bankID=factionSelectedName, x=x, y=y, z=z, worldObjName=worldObjName })
         end
     end

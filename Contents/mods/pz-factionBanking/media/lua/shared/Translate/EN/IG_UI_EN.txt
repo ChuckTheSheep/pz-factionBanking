@@ -12,4 +12,5 @@ IGUI_EN = {
     IGUI_NOFACTION = "You need to be in a faction to use any bank.",
     IGUI_FACTIONLOCKED_TOOLTIP = "If true, only faction members can use this bank.",
     IGUI_DRAGCASHHERE = "Drag cash here to deposit directly.",
+    IGUI_TOO_MANY_BANKS= "You have too many bank locations set.\n(There is a limit of %1)"
 }
