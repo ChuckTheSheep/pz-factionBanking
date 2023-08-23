@@ -36,7 +36,7 @@ function CONTEXT_HANDLER.generateContextMenu(playerID, context, worldObjects)
     local tooManyBanks = false
     local maxLocations = SandboxVars.FactionBanking.MaxNumberOfBanksPerFaction or 1
 
-    local previousAccObj = CLIENT_BANK_ACCOUNTS[playerFaction:getName()]
+    local previousAccObj = playerFaction and CLIENT_BANK_ACCOUNTS[playerFaction:getName()] or false
     if previousAccObj then
         previousAccObj.banksLocations = previousAccObj.banksLocations or 0
         tooManyBanks = maxLocations <= previousAccObj.banksLocations
